@@ -17,7 +17,7 @@
 - **Offline-validated integration:** target hashes, patch preconditions, simulated writes and restore flow; toolkit original-value guards, private snapshots, readback and normal/error teardown.
 - **Not fully hardware-validated:** the integrated Wi-Fi host tool and reverse-byte helper. Offline checks do not replace validation of real USB or filesystem failures.
 
-The dependency is pinned to toolkit commit `e8d4cb566fa04dac249e10431302e4d950550bde`; installation includes the exact checkout command. Results are in [offline-checks.json](offline-checks.json), a machine-readable result file whose field names are language-independent.
+The dependency is pinned to toolkit commit `6a2ce8c87bb39edb6fbee010a5ed8401e51443b3`; installation includes the exact checkout command. Results are in [offline-checks.json](offline-checks.json), a machine-readable result file whose field names are language-independent.
 
 ## Checks without a camera
 
@@ -36,4 +36,4 @@ These checks neither connect to a camera nor require private firmware files. Mai
 
 Exclude `private/`, `vendor/`, virtual environments and external camera backups from public archives. `.gitignore` controls Git tracking and does not protect arbitrary zip operations. Private snapshots may contain device identifiers, credentials or keys.
 
-New SET_FILE2 uploads, version enforcement, WBI transaction guards and full readback have offline simulation tests. The 2026-11-07 underlying successes were on system **2.02**; system 2.03 is unsupported. The exact Sony ELF source package was 2.03, not the installed camera system. New sysfs identity checks, integrated USB execution, rollback and real power/USB failure behavior remain untested on hardware.
+The 2026-11-07 underlying procedure was validated on **2.02**, including actual 5 GHz functions. On 2026-11-12, **2.03** was validated through the native menu after WBI invalidation, with the same byte/property changes; actual 5 GHz hotspot/router acceptance remains pending. The packaged refactor, additional identity guards, rollback and real USB/power failure behavior remain unvalidated on hardware. See [2.03 evidence](firmware-203.md).

@@ -1,5 +1,12 @@
 # AI Agent 辅助安装
 
+## 系统 2.03 的连接方式
+
+系统为 `30110_06.2026060501` 时，下文**每次** `wifi.py serve` 都追加 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。继续复用 toolkit 的唯一连接、请求队列、Backup 操作和清理；2.02 保留原终端后端。必须等待 `ready` 后才让机主操作菜单。
+
+Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](firmware-203.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；完整 2.03 镜像尚未实机验收。写入前仍需核对可靠备份和恢复途径。
+
+
 **简体中文** | [English](install.md)
 
 本流程需要用户与 Agent 配合完成。系统 2.02 的单字节写入、Jiritsu 上传和底层服务、Backup 操作已有实机记录；`wifi.py` 只负责 Wi-Fi 专用操作，直接调用 zv-e10-toolkit 的服务端、客户端、传输方法和通用 Backup 接口。Wi-Fi 主机工具集成已完成离线检查，验证范围见[许可与验证范围](release.zh-CN.md)。操作前先读 [AGENTS.md](../AGENTS.md) 和[恢复说明](recovery.zh-CN.md)。
@@ -8,13 +15,13 @@
 
 需要 Python 3 虚拟环境和 libusb。macOS 可通过常用包管理器安装 libusb；也可用 `LIBUSB_PATH` 指定库路径。toolkit 会检查 Apple Silicon 和 Intel Homebrew 的常用路径。已有实机流程使用 macOS；本项目尚未在 Linux 上完整验证，未提供 Windows 启动器。
 
-本项目使用 [zv-e10-toolkit `e8d4cb5`](https://github.com/dino2048/zv-e10-toolkit/commit/e8d4cb566fa04dac249e10431302e4d950550bde) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
+本项目使用 [zv-e10-toolkit `6a2ce8c`](https://github.com/dino2048/zv-e10-toolkit/commit/6a2ce8c87bb39edb6fbee010a5ed8401e51443b3) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach e8d4cb566fa04dac249e10431302e4d950550bde
+git -C "$ZVE10_TOOLKIT" checkout --detach 6a2ce8c87bb39edb6fbee010a5ed8401e51443b3
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
@@ -32,7 +39,7 @@ sh tools/build-helpers.sh
 
 ## 2. 核对相机并备份
 
-确认是 **ZV-E10 第一代，机内版本页显示 2.02**，供电稳定、正常启动，且没有尚未处理的旧修改。强烈建议用 USB-C 数据线连接相机和电脑，通过 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 完整备份 eMMC 用户区并校验。备份可能包含设备秘密，应私密保管。写入前了解额外硬件 fastboot 恢复的途径；备份并不保证所有故障都能恢复。
+确认是 **ZV-E10 第一代，机内版本页显示 2.02 或 2.03**，供电稳定、正常启动，且没有尚未处理的旧修改。强烈建议用 USB-C 数据线连接相机和电脑，通过 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 完整备份 eMMC 用户区并校验。备份可能包含设备秘密，应私密保管。写入前了解额外硬件 fastboot 恢复的途径；备份并不保证所有故障都能恢复。
 
 将 USB 连接设为 **海量存储器（Mass Storage）**，使用支持数据传输的 USB-C 线。相机处于 USB 存储模式时可能无法操作菜单，应先建立持久服务会话，再请机主操作菜单。
 

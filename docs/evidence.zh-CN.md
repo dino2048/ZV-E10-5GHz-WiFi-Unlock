@@ -1,5 +1,7 @@
 # 实测记录与来源
 
+下文保留原 2.02 历史实测；2.03 的新结果和限制单独记录。 [2.03](firmware-203.zh-CN.md)
+
 **简体中文** | [English](evidence.md)
 
 本文汇总 ZV-E10 第一代、固件 2.02 的实机测试结果，以及相关技术资料来源。
@@ -49,4 +51,4 @@
 - [IFT Sony 设备清单](https://www.ift.org.mx/node/19562)：ZV-E10 Type1DR 条目。
 - [NTC 2021 设备清单](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf)：A7C Type1DR 条目，印刷第 187 页。
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE)、[MIT 许可](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt)：服务协议实现；toolkit 固定版本为 `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`。
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `e8d4cb566fa04dac249e10431302e4d950550bde`。
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `6a2ce8c87bb39edb6fbee010a5ed8401e51443b3`。

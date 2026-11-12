@@ -8,7 +8,7 @@ The ZV-E10 and original A7C share the Murata Type 1DR wireless module and Broadc
 
 This project unlocks native 5 GHz Wi-Fi on the first-generation Sony ZV-E10 for better wireless photo transfers and remote connections.
 
-**Tested camera: first-generation ZV-E10, firmware 2.02.**
+**Tested camera: first-generation ZV-E10. 2.02 has functional 5 GHz tests; 2.03 has patch persistence, WBI recovery and native band-menu confirmation.**
 
 ## What changes
 
@@ -23,7 +23,7 @@ Only **one byte in `CautionConfig.so` and three Backup properties** need changin
 
 The table shows the mainland China configuration. Connect the camera to a computer with a USB-C data cable to make these changes; fastboot is not needed for installation. See [installation instructions](docs/install.md).
 
-**After installation, verify a real cold boot.** A saved Sony Warm Boot Image can keep the old four-item Wi-Fi page even when the byte and properties are correct; removing the battery for 30 seconds may still resume it. This was diagnosed and resolved on firmware 2.02. Require runtime TypeNB/five items and the actual native band menu. The installer includes read-only `boot-check` plus separately confirmed [WBI recovery](docs/wbi.md), with two full backups and complete readback. Helper uploads use Jiritsu SET_FILE2 with host byte comparison. Only system **2.02 (`30110_05.2025031501`)** is supported; 2.03 is refused. The new integration has offline tests only.
+**After installation, verify a real cold boot.** A saved Sony Warm Boot Image can keep the old four-item Wi-Fi page even when the byte and properties are correct; removing the battery for 30 seconds may still resume it. This was diagnosed and resolved on firmware 2.02. Require runtime TypeNB/five items and the actual native band menu. The installer includes read-only `boot-check` plus separately confirmed [WBI recovery](docs/wbi.md), with two full backups and complete readback. Helper uploads use Jiritsu SET_FILE2 with host byte comparison. Known systems **2.02 (`30110_05.2025031501`)** and **2.03 (`30110_06.2026060501`)** are accepted. 2.03 requires the toolkit Jiritsu backend. Its native band menu was confirmed, but hotspot/router functions have not been separately accepted. This packaged refactor has offline tests; see [2.03 evidence](docs/firmware-203.md).
 
 ## Features
 

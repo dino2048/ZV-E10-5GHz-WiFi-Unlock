@@ -46,8 +46,8 @@ class UploadTests(unittest.TestCase):
 
 
 class VersionTests(unittest.TestCase):
-    def test_reject_203_and_inconsistent_reads_before_any_write(self):
-        for versions in ((b'30110_06.2026060501',) * 2, (wifi.FIRMWARE, b'bad')):
+    def test_unknown_and_inconsistent_reads_before_any_write(self):
+        for versions in ((b'unknown',) * 2, (wifi.FIRMWARE, b'bad')):
             with patch.object(wifi, 'read_file', side_effect=versions), patch.object(wifi, 'run') as run:
                 with self.assertRaisesRegex(ValueError, '2.02'):
                     wifi.dispatch(Mock(), {'action': 'patch'}, Path('.'), True)
@@ -56,6 +56,14 @@ class VersionTests(unittest.TestCase):
     def test_known_version(self):
         with patch.object(wifi, 'read_file', return_value=wifi.FIRMWARE):
             wifi.check_firmware(Mock())
+
+    def test_203_requires_jiritsu_and_two_exact_reads(self):
+        camera = type('Camera', (), {})()
+        with patch.object(wifi, 'read_file', return_value=b'30110_06.2026060501'):
+            with self.assertRaisesRegex(ValueError, 'Jiritsu'):
+                wifi.check_firmware(camera)
+            camera._jiritsu_backend = object()
+            self.assertEqual(wifi.check_firmware(camera), b'30110_06.2026060501')
 
     def test_unknown_library_and_sony_tool(self):
         with self.assertRaises(ValueError):
@@ -205,7 +213,7 @@ class WbiTests(unittest.TestCase):
         self.assertTrue(list(self.folder.glob('*-after.bin')))
 
     def test_wrong_owner_model_or_version_no_access(self):
-        for model, version in (('ZV-E10M2', '2.02'), ('ZV-E10', '2.03')):
+        for model, version in (('ZV-E10M2', '2.02'), ('ZV-E10', '2.04')):
             with self.assertRaises(ValueError):
                 wbi.dispatch(self.camera, {'action':'wbi-prepare', 'model':model,
                              'displayed_firmware':version}, self.folder, False, self.ops)

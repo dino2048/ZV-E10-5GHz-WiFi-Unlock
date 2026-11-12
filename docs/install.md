@@ -1,5 +1,12 @@
 # Agent-assisted installation
 
+## System 2.03 transport
+
+For `30110_06.2026060501`, append `--backend jiritsu --firmware 2.03 --owner-authorized-exec` to **every** `wifi.py serve` command below. This uses the same toolkit connection, queue, Backup actions and cleanup. System 2.02 keeps the existing terminal backend. Wait for `ready` before camera menu interaction.
+
+Jiritsu temporarily uploads our loader/script; it is not a zero-write inspection session. On close, wait for `closed`, `service_returned=true`, `loader_files_removed=true`, then switch off, unplug USB and remove the battery. The RAM process ends on power removal. Read [2.03 evidence and limitations](firmware-203.md). Toolkit Jiritsu raw backup is slow (about 1.3 MiB/s; roughly 25 minutes per user-area pass); a complete 2.03 backup has not been hardware-validated. Keep a verified backup/recovery route before writing.
+
+
 **English** | [简体中文](install.zh-CN.md)
 
 This is a supervised procedure, not an unattended installer. The byte-writing ELF and underlying service/Backup operations have hardware validation records. `wifi.py` contains only Wi-Fi-specific operations; it imports the existing zv-e10-toolkit server, client, transport helpers and generic Backup property actions. This integration has offline checks only. Read [AGENTS.md](../AGENTS.md) and [recovery](recovery.md) first.
@@ -8,13 +15,13 @@ This is a supervised procedure, not an unattended installer. The byte-writing EL
 
 Use a Python 3 virtual environment and libusb. On macOS, install libusb through your normal package manager; `LIBUSB_PATH` can select the library. The common helper also checks Apple Silicon and Intel Homebrew locations. The demonstrated USB path is macOS; Linux needs working USB permissions and remains untested end to end for this package. Windows launchers are not supplied.
 
-This project uses [zv-e10-toolkit `e8d4cb5`](https://github.com/dino2048/zv-e10-toolkit/commit/e8d4cb566fa04dac249e10431302e4d950550bde), which provides the generic Backup-property actions and the existing persistent-session extension interface. Clone the toolkit and check out the pinned commit:
+This project uses [zv-e10-toolkit `6a2ce8c`](https://github.com/dino2048/zv-e10-toolkit/commit/6a2ce8c87bb39edb6fbee010a5ed8401e51443b3), which provides the generic Backup-property actions and the existing persistent-session extension interface. Clone the toolkit and check out the pinned commit:
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach e8d4cb566fa04dac249e10431302e4d950550bde
+git -C "$ZVE10_TOOLKIT" checkout --detach 6a2ce8c87bb39edb6fbee010a5ed8401e51443b3
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
@@ -32,7 +39,7 @@ No ARM libc is required. A different source filename/toolchain may change ELF sy
 
 ## 2. Confirm the camera and backup
 
-Confirm **ZV-E10 first generation, displayed firmware 2.02**, stable power, normal boot and no unresolved prior modifications. Strongly recommend a verified full eMMC user-area backup via [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit), over ordinary USB-C. Keep the backup privately; it may contain device secrets. Know where a hardware-assisted fastboot recovery would come from before writing. Backup is not a guarantee of recovery.
+Confirm **ZV-E10 first generation, displayed firmware 2.02 or 2.03**, stable power, normal boot and no unresolved prior modifications. Strongly recommend a verified full eMMC user-area backup via [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit), over ordinary USB-C. Keep the backup privately; it may contain device secrets. Know where a hardware-assisted fastboot recovery would come from before writing. Backup is not a guarantee of recovery.
 
 Set USB Connection to **Mass Storage**, not Auto/MTP, and use a data-capable USB-C cable. Do not ask the owner to navigate menus while stuck in USB storage: start the persistent service session first.
 

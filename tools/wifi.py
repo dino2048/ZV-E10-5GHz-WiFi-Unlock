@@ -32,7 +32,8 @@ FACTORY = '5ad8746a229da259fe00b297e8f897d682f7ae9a13393025b3d1c95a808e68d7'
 PATCHED = '14f42cc09ee1b9ddde5352482c13b68e5a5e97d9d79e8456087b5e0b7af6ff6a'
 OFFSET = 0xD778E4
 KEYS = (0x01071C54, 0x00A5000B, 0x00A5000C)
-FIRMWARE = b'30110_05.2025031501'  # system 2.02; reject 2.03 (30110_06.2026060501)
+FIRMWARE = b'30110_05.2025031501'
+SUPPORTED_FIRMWARE = (FIRMWARE, b'30110_06.2026060501')
 HELPER_HASHES = {
     'patch': 'f8270987db52912e987d2a8c8fd7576096085571a1aa5de73bc98fe21c865ea6',
     'restore': 'ae3ce7d823a4e19a162befd236db9af99f222bc3b48a44468288b62888a7f712',
@@ -106,8 +107,11 @@ def read_file(camera, path):
 def check_firmware(camera):
     # Check on every operation, even if a server was started with an override.
     versions = [read_file(camera, '/version.txt') for _ in range(2)]
-    if versions != [FIRMWARE, FIRMWARE]:
-        raise ValueError('Only ZV-E10 system 2.02 (30110_05.2025031501) is supported; STOP: ' + repr(versions))
+    if versions[0] not in SUPPORTED_FIRMWARE or versions[0] != versions[1]:
+        raise ValueError('Require two matching known ZV-E10 2.02/2.03 system versions; STOP: ' + repr(versions))
+    if versions[0] == SUPPORTED_FIRMWARE[1] and not hasattr(camera, '_jiritsu_backend'):
+        raise ValueError('System 2.03 requires the toolkit Jiritsu backend')
+    return versions[0]
 
 
 def upload_verified(camera, path, data):

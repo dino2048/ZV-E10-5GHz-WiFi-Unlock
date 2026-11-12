@@ -1,12 +1,14 @@
 # Technical notes and research lessons
 
+The 2026-11-12 update adds known-system 2.03 identity checks and a Jiritsu transport; WBI invalidation restored the native menu. Hotspot/router acceptance is still pending. [2.03](firmware-203.md)
+
 **English** | [简体中文](technical.zh-CN.md)
 
 This document explains the minimal modification and the research behind it. See [test records and sources](evidence.md) for hardware results and source material.
 
 ## Warm Boot Image and menu construction
 
-Sony stores a Warm Boot Image in the 60 MiB `nflasha5` partition. On the tested 2.02 camera, the patched `CautionConfig.so` jump table and correct Backup values coexisted with an old TypeRK/four-item Page1 after warm resume; the frequency node `0x285` had not been created. Battery removal for about 30 seconds did not guarantee a fresh Page1. After the backed-up Sony updater invalidated the WBI header, the next boot lacked warm-resume markers and both global and current Page1 held TypeNB/five items, including an enabled `0x285`. The owner confirmed the native menu and 5 GHz operations. See [WBI recovery](wbi.md) for guarded acceptance. This is a 2.02 hardware result; 2.03 remains unaccepted under equivalent conditions.
+Sony stores a Warm Boot Image in the 60 MiB `nflasha5` partition. On the tested 2.02 camera, the patched `CautionConfig.so` jump table and correct Backup values coexisted with an old TypeRK/four-item Page1 after warm resume; the frequency node `0x285` had not been created. Battery removal for about 30 seconds did not guarantee a fresh Page1. After the backed-up Sony updater invalidated the WBI header, the next boot lacked warm-resume markers and both global and current Page1 held TypeNB/five items, including an enabled `0x285`. The owner confirmed the native menu and 5 GHz operations. See [WBI recovery](wbi.md) for guarded acceptance. This is a 2.02 hardware result; 2.03 menu recovery is now recorded separately; full radio acceptance remains pending.
 
 ## Native menu: TypeNB, not a replacement UI
 
@@ -58,7 +60,7 @@ Distinguish the ext4-style inode extraction used for offline eMMC evidence from 
 | Analyzed 2.03 `libObj.so` | `cfdc59b94fa56116e9d99154ca03a2c1aaf6039dd272679b78b0b76e21c722ac`; differs from 2.02 |
 | Normal BCM4339 firmware | `cbb464370e3a954736b05ed16377fc53450eda50252f2b8ffe0fd8464ff200b5` |
 
-The camera's displayed version was **2.02**. The 2.02 live `/version.txt` is `30110_05.2025031501`; the recorded installed 2.03 system reports `30110_06.2026060501`. An old shared-library string must not be confused with the live version file. The tool requires two exact 2.02 version-file reads; WBI recovery additionally checks the known 2.02 `libObj.so` fingerprint. Identical target-library bytes alone do not establish 2.03 compatibility.
+The camera's displayed version was **2.02**. The 2.02 live `/version.txt` is `30110_05.2025031501`; the recorded installed 2.03 system reports `30110_06.2026060501`. An old shared-library string must not be confused with the live version file. The tool requires two matching known 2.02/2.03 version-file reads; WBI additionally checks the corresponding system-specific `libObj.so` fingerprint. Identical target-library bytes alone do not establish 2.03 compatibility.
 
 ## CLM and unresolved regulatory questions
 

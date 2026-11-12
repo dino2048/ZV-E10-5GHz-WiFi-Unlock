@@ -31,7 +31,7 @@ def main():
         stream.write(candidates[0])
     print('Verified Sony tool:', args.out)
     print('SHA-256:', wbi.TOOL_HASH)
-    print('Source package version 2.03 is NOT the supported camera system version: only 2.02.')
+    print('Source package: 2.03. Accepted installed systems: exact known ZV-E10 2.02 / 2.03; runtime guards still apply.')
 
 
 if __name__ == '__main__':

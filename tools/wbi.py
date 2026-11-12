@@ -1,4 +1,4 @@
-"""Guarded WBI invalidation, using only the Sony utility tested on system 2.02.
+"""Guarded WBI invalidation, using only the Sony utility tested on known systems 2.02 and 2.03.
 No general block writer or automatic restore is exposed.
 """
 import hashlib
@@ -18,6 +18,10 @@ CONFIG = (b'# start address,size,type,flag\n'
           b'0x04C00000,0x00C00000,0x00000000,0xFFFFFFFF\n'
           b'0x05800000,0x03C00000,0x00000002,0xFFFFFFFF\n')
 CONFIG_HASH = '9bb1cba13c10ce88bd88d054dc49a823b3b1409ce6dfbeaeaa180f31d22744a8'
+SYSTEMS = {
+    b'30110_05.2025031501': ('2.02', 21305456, 'bc0deb2f0e94218752e42ce6f5a3576d7456971eb63fbde705ffbd9b3a7fdeea'),
+    b'30110_06.2026060501': ('2.03', 21305528, 'cfdc59b94fa56116e9d99154ca03a2c1aaf6039dd272679b78b0b76e21c722ac'),
+}
 
 
 def sha(data):
@@ -45,11 +49,15 @@ def validate_partition(partitions, geometry, node=None):
 def identity(camera, ops, folder):
     evidence = {}
     try:
-        ops.check_firmware(camera)
+        system = ops.check_firmware(camera)
+        if system not in SYSTEMS:
+            raise ValueError('Unknown camera system fingerprint')
+        label, model_size, model_hash = SYSTEMS[system]
+        evidence['system'] = system.decode('ascii')
         model_library = ops.read_file(camera, '/usr/lib/libObj.so')
         evidence['libObj'] = {'bytes': len(model_library), 'sha256': sha(model_library)}
-        if len(model_library) != 21305456 or sha(model_library) != 'bc0deb2f0e94218752e42ce6f5a3576d7456971eb63fbde705ffbd9b3a7fdeea':
-            raise ValueError('ZV-E10 2.02 model/system library fingerprint mismatch; STOP')
+        if len(model_library) != model_size or sha(model_library) != model_hash:
+            raise ValueError('ZV-E10 model/system library fingerprint mismatch; STOP')
         target = ops.read_file(camera, ops.TARGET)
         evidence['CautionConfig'] = {'bytes': len(target), 'sha256': sha(target)}
         ops.verify(target, ops.PATCHED)
@@ -62,7 +70,7 @@ def identity(camera, ops, folder):
         evidence['geometry'] = ops.run(camera, 'busybox cat /sys/class/block/nflasha5/dev /sys/class/block/nflasha5/start /sys/class/block/nflasha5/size')
         ops.run(camera, 'test -b /dev/nflasha5 && test ! -L /dev/nflasha5')
         evidence['node'] = ops.run(camera, 'busybox ls -l /dev/nflasha5')
-        return validate_partition(evidence['partitions'], evidence['geometry'], evidence['node'])
+        return dict(validate_partition(evidence['partitions'], evidence['geometry'], evidence['node']), displayed_firmware=label)
     except Exception as exc:
         evidence['error'] = repr(exc)
         raise
@@ -72,7 +80,7 @@ def identity(camera, ops, folder):
 
 
 def read_partition(camera, folder, name, ops):
-    """Bounded streaming FileControl read, preserving partial data on failure."""
+    """Bounded streaming toolkit backend read, preserving partial data on failure."""
     path = folder / name
     class Sink:
         size = 0
@@ -122,11 +130,13 @@ def dispatch(camera, req, folder, allow_write, ops):
         ops.save_private(folder, prefix + '-result.json', (json.dumps(report, indent=2) + '\n').encode())
     try:
         if req['action'] == 'wbi-prepare':
-            if req.get('model') != 'ZV-E10' or req.get('displayed_firmware') != '2.02':
-                raise ValueError('Owner must confirm first-generation ZV-E10, displayed system 2.02')
+            if req.get('model') != 'ZV-E10' or req.get('displayed_firmware') not in ('2.02', '2.03'):
+                raise ValueError('Owner must confirm first-generation ZV-E10 and displayed system 2.02/2.03')
             tool = Path(req['sony_tool']).read_bytes()
             validate_tool(tool)
             report['identity'] = identity(camera, ops, folder)
+            if report['identity'].get('displayed_firmware', req['displayed_firmware']) != req['displayed_firmware']:
+                raise ValueError('Displayed firmware differs from the checked system')
             first = read_partition(camera, folder, prefix + '-read1.bin', ops)
             second = read_partition(camera, folder, prefix + '-read2.bin', ops)
             report['backup_sha256'] = [sha(first), sha(second)]

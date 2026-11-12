@@ -1,28 +1,31 @@
 {
   "offline_only": true,
   "camera_connected": false,
-  "supported_camera_system": "ZV-E10 first generation 2.02 / 30110_05.2025031501",
-  "rejected_camera_system": "2.03 / 30110_06.2026060501",
-  "sony_tool_source_package": "Official ZV-E10 2.03 updater; not the installed system version",
-  "toolkit_revision": "e8d4cb566fa04dac249e10431302e4d950550bde",
-  "toolkit_source": "fresh GitHub clone at pinned revision",
+  "supported_camera_systems": [
+    "ZV-E10 2.02 / 30110_05.2025031501",
+    "ZV-E10 2.03 / 30110_06.2026060501 (requires Jiritsu)"
+  ],
+  "rejected_camera_systems": "Unknown or inconsistent versions; 2.03 without Jiritsu",
+  "sony_tool_source_package": "Official ZV-E10 2.03 Windows updater, hash-pinned offline extraction rerun",
+  "toolkit_revision": "6a2ce8c87bb39edb6fbee010a5ed8401e51443b3",
+  "toolkit_source": "Based on GitHub main b0f6c90a4c0f835194adb1a8518280046cc0445f; local prepared commit, publish toolkit before Wi-Fi",
   "checks_passed": [
-    "20 safety unit/simulation tests in tools/test_safety.py",
-    "check_offline.py: AST, Page1 parser and boot-check, ARM inverse load segments, Backup guards and unknown-library refusal",
-    "Pinned toolkit: 8 offline tests and 25 service shell guard checks",
-    "2.02 historical helper: packaged, uploaded and readback files identical byte for byte",
-    "2.02 historical WBI: reconstruction source hash, full before/after hashes and exact first-512-byte-zero rule verified",
-    "Offline CLI help, local Markdown links and English/Chinese command parity"
+    "21 Wi-Fi safety unit/simulation tests",
+    "check_offline.py: AST, Page1 parser, boot-check, ARM inverse load segments, Backup guards and unknown-library refusal",
+    "Toolkit: 20 offline tests and 25 service shell guard checks",
+    "Official EXE extraction reproduced exact 6200-byte Sony tool",
+    "Local Markdown targets and Git whitespace checks"
   ],
   "not_hardware_validated": [
-    "New integrated SET_FILE2/WBI actions",
-    "Additional sysfs/block-node identity checks",
-    "WBI restoration",
-    "Real USB/power failure handling"
+    "Packaged Jiritsu/slow-backup/Wi-Fi refactor",
+    "Additional identity guards and new cancellation handling",
+    "Complete 2.03 user+boot image and double pass",
+    "2.03 actual 5 GHz hotspot/router functions",
+    "WBI restoration and real USB/power failure handling"
   ],
+  "underlying_hardware_evidence": "See firmware-203.md and evidence.md; separate from packaged integration tests",
   "not_repeated": [
-    "Camera connection or modification",
-    "Sony package extraction (source containers previously removed)"
+    "Camera connection or modification during release preparation"
   ],
-  "environment_scope": "Owner-designated Python virtual environment; no packages installed"
+  "environment_scope": "Owner-designated Python virtual environment; no system Python packages"
 }
