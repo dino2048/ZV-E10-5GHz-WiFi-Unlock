@@ -10,7 +10,7 @@ This project unlocks native 5 GHz Wi-Fi on the first-generation Sony ZV-E10 for 
 
 **Tested camera: first-generation ZV-E10. 2.02 has functional 5 GHz tests; 2.03 has patch persistence, WBI recovery and native band-menu confirmation.**
 
-![Unlocked native Wi-Fi menu in English, with 5 GHz selected](docs/images/wifi-band-en.jpg)
+<img src="docs/images/wifi-band-en.jpg" alt="Unlocked native Wi-Fi menu in English, with 5 GHz selected" width="640">
 
 ## What changes
 
