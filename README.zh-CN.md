@@ -10,6 +10,8 @@ ZV-E10 与第一代 A7C 使用相同的 Murata Type 1DR 无线模块和 Broadcom
 
 **实测机型：ZV-E10 第一代。2.02 已验证 5 GHz 功能；2.03 已验证修改保留、WBI 恢复及原生频段菜单。**
 
+![解锁后的中文原生 Wi-Fi 菜单，已选择 5 GHz](docs/images/wifi-band-zh-CN.jpg)
+
 ## 修改内容
 
 只需修改 **`CautionConfig.so` 的一个字节和三个 Backup 属性**：
