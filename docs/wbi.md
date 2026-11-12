@@ -4,7 +4,7 @@
 
 Use only on first-generation **ZV-E10 known systems 2.02 and 2.03**, after the one-byte patch and Backup `01/02/16` are verified, when Page1 is still TypeRK/four items and the native band menu is absent. Do not repeat the patch/property writes. An old WBI can restore the old page; battery removal for 30 seconds does not guarantee a true cold boot.
 
-The 2026-11-07 **2.02** records show two matching full backups, Sony's utility returning `[UD_WBI_DROP] /dev/nflasha5 wbi_drop`, then a complete readback with only the first 512 bytes zeroed. After power removal, global and current Page1 became TypeNB/five items, and the owner confirmed the band menu and 5 GHz phone/router use. The new host integration has **offline tests only**. The 2026-11-12 **2.03** run also confirmed that only the first 512 WBI bytes changed, followed by owner confirmation of the native band menu. Its hotspot/router functions remain untested. See [2.03 evidence](firmware-203.md).
+Both versions have validated the same WBI procedure: two complete backups, the Sony utility and full after-read comparison confirming only the first 512 bytes zeroed, followed by a working native band menu after restart. See [firmware differences and validation results](evidence.md).
 
 ## 1. Obtain the original Sony tool offline
 

@@ -6,7 +6,7 @@
 
 系统为 `30110_06.2026060501` 时，下文**每次** `wifi.py serve` 都追加 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。继续复用 toolkit 的唯一连接、请求队列、Backup 操作和清理；2.02 保留原终端后端。必须等待 `ready` 后才让机主操作菜单。
 
-Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](firmware-203.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；独立 8 MiB RAM 缓冲/4 MiB 分块的研究封装已完成 2.03 用户区+B0/B1 单遍（940.956 秒，1.989 MiB/s）；正式 CLI 默认仍为 512 KiB，独立双遍及恢复未验收。写入前仍需核对可靠备份和恢复途径。
+Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](evidence.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；独立 8 MiB RAM 缓冲/4 MiB 分块的研究封装已完成 2.03 用户区+B0/B1 单遍（940.956 秒，1.989 MiB/s）；正式 CLI 默认仍为 512 KiB，独立双遍及恢复未验收。写入前仍需核对可靠备份和恢复途径。
 
 
 **简体中文** | [English](install.md)
@@ -111,7 +111,7 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 
 相机 OFF，等待存取指示灯熄灭，拔掉 USB 并取下电池约 30 秒。重新装入后，在 `private/verify-01` 建立新的**只读**会话，等待 `ready` 再检查。保持会话打开，请机主进入“网络 → Wi-Fi 设置 → 频带”，检查 2.4/5 GHz 选择页。
 
-**暖启动检查：**取电池约 30 秒仍可能从相机保存的 Warm Boot Image 恢复旧菜单状态。2026-11-07 实机曾在补丁和三个属性都正确时，运行中的 Wi-Fi 页仍是 TypeRK 四项；内核日志有 `PM: Low-level resume complete`。在验收会话中查看启动日志，并核对当前 Page1 是否为 TypeNB 五项。若仍为 TypeRK 四项或缺少「频带」，停止验收，保留日志与快照；不要重刷同一字节、重复写 Backup 或把取电池当作已经完成真正冷启动。该机经先备份完整 60 MiB `nflasha5`、再用 Sony 原厂工具仅清除其首 512 B 暖镜像入口、断电重启后，日志无暖恢复标志，Page1 和屏幕均恢复五项。现已提供独立的 `wbi-prepare` / `wbi-drop` 保护流程，详见[暖镜像恢复](wbi.zh-CN.md)，必须完整双备份、另行确认 eMMC 写入并完整回读。Sony 原厂工具需从用户自备官方更新包私密提取，不随仓库分发。
+**暖启动检查：**取电池约 30 秒仍可能从相机保存的 Warm Boot Image 恢复旧菜单状态。实机曾在补丁和三个属性都正确时，运行中的 Wi-Fi 页仍是 TypeRK 四项；内核日志有 `PM: Low-level resume complete`。在验收会话中查看启动日志，并核对当前 Page1 是否为 TypeNB 五项。若仍为 TypeRK 四项或缺少「频带」，停止验收，保留日志与快照；不要重刷同一字节、重复写 Backup 或把取电池当作已经完成真正冷启动。该机经先备份完整 60 MiB `nflasha5`、再用 Sony 原厂工具仅清除其首 512 B 暖镜像入口、断电重启后，日志无暖恢复标志，Page1 和屏幕均恢复五项。现已提供独立的 `wbi-prepare` / `wbi-drop` 保护流程，详见[暖镜像恢复](wbi.zh-CN.md)，必须完整双备份、另行确认 eMMC 写入并完整回读。Sony 原厂工具需从用户自备官方更新包私密提取，不随仓库分发。
 
 在新建且处于 `ready` 状态的只读会话中执行：
 

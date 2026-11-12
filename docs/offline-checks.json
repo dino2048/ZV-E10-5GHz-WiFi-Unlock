@@ -24,12 +24,12 @@
     "WBI restoration and real USB/power failure handling",
     "Independent 2.03 double pass, atomic consistency and restoration"
   ],
-  "underlying_hardware_evidence": "See firmware-203.md and evidence.md; separate from packaged integration tests",
+  "underlying_hardware_evidence": "See evidence.md for firmware differences and hardware validation; offline checks are listed separately",
   "not_repeated": [
     "No Wi-Fi/property/WBI writes during subsequent backup validation"
   ],
   "environment_scope": "Owner-designated Python virtual environment; no system Python packages",
-  "subsequent_hardware_validation_20261112": {
+  "hardware_validation": {
     "full_backup": "User+B0+B1 single pass, 1962934272 bytes; chunk and host reread hashes matched",
     "speed": "940.956 seconds / 1.989 MiB/s, research wrapper with dedicated 8 MiB tmpfs and 4 MiB chunks",
     "cancellation": "Short default backup cancelled with partial manifest; connection remained usable",

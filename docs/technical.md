@@ -1,6 +1,6 @@
 # Technical notes and research lessons
 
-The 2026-11-12 update adds known-system 2.03 identity checks and a Jiritsu transport; WBI invalidation restored the native menu. Hotspot/router acceptance is still pending. [2.03](firmware-203.md)
+The Wi-Fi changes are shared by 2.02 and 2.03. See the [version comparison](evidence.md) for connection, system-fingerprint and backup differences.
 
 **English** | [简体中文](technical.zh-CN.md)
 

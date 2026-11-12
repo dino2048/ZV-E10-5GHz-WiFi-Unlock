@@ -36,4 +36,4 @@ These checks neither connect to a camera nor require private firmware files. Mai
 
 Exclude `private/`, `vendor/`, virtual environments and external camera backups from public archives. `.gitignore` controls Git tracking and does not protect arbitrary zip operations. Private snapshots may contain device identifiers, credentials or keys.
 
-The 2026-11-07 underlying procedure was validated on **2.02**, including actual 5 GHz functions. On 2026-11-12, **2.03** was validated through the native menu after WBI invalidation, with the same byte/property changes; actual 5 GHz hotspot/router acceptance remains pending. The packaged refactor, additional identity guards, rollback and real USB/power failure behavior remain unvalidated on hardware. See [2.03 evidence](firmware-203.md).
+See [firmware differences and validation results](evidence.md) for both versions; offline checks are recorded separately in [offline-checks.json](offline-checks.json).
