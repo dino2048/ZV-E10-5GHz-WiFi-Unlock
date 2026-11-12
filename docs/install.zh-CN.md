@@ -6,7 +6,7 @@
 
 系统为 `30110_06.2026060501` 时，下文**每次** `wifi.py serve` 都追加 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。继续复用 toolkit 的唯一连接、请求队列、Backup 操作和清理；2.02 保留原终端后端。必须等待 `ready` 后才让机主操作菜单。
 
-Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](evidence.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；独立 8 MiB RAM 缓冲/4 MiB 分块的研究封装已完成 2.03 用户区+B0/B1 单遍（940.956 秒，1.989 MiB/s）；正式 CLI 默认仍为 512 KiB，独立双遍及恢复未验收。写入前仍需核对可靠备份和恢复途径。
+Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](evidence.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；独立 8 MiB RAM 缓冲/4 MiB 分块的研究封装已完成 2.03 用户区+B0/B1 单遍（940.956 秒，1.989 MiB/s）；正式 raw-backup 可设置 chunk_kib=4096；默认 512 KiB，独立双遍及恢复未验收。写入前仍需核对可靠备份和恢复途径。
 
 
 **简体中文** | [English](install.md)
@@ -17,13 +17,13 @@ Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机�
 
 需要 Python 3 虚拟环境和 libusb。macOS 可通过常用包管理器安装 libusb；也可用 `LIBUSB_PATH` 指定库路径。toolkit 会检查 Apple Silicon 和 Intel Homebrew 的常用路径。已有实机流程使用 macOS；本项目尚未在 Linux 上完整验证，未提供 Windows 启动器。
 
-本项目使用 [zv-e10-toolkit `2255eef`](https://github.com/dino2048/zv-e10-toolkit/commit/2255eef9a5ec7b459f19c444c29166f547949a67) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
+本项目使用 [zv-e10-toolkit `710e96d`](https://github.com/dino2048/zv-e10-toolkit/commit/710e96d99bcb8106111c2b533268e5afd10fa2a9) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach 2255eef9a5ec7b459f19c444c29166f547949a67
+git -C "$ZVE10_TOOLKIT" checkout --detach 710e96d99bcb8106111c2b533268e5afd10fa2a9
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
@@ -52,10 +52,10 @@ sh tools/build-helpers.sh
 在仓库根目录另开终端：
 
 ```sh
-sudo ZVE10_TOOLKIT="$ZVE10_TOOLKIT" "$WIFI_PYTHON" -B tools/wifi.py serve --session-dir private/install-01 --owner-authorized-write
+sudo /bin/launchctl asuser "$(id -u)" /usr/bin/env ZVE10_TOOLKIT="$ZVE10_TOOLKIT" "$WIFI_PYTHON" -B tools/wifi.py serve --client-uid "$(id -u)" --idle-timeout 3600 --session-dir private/install-01 --owner-authorized-write
 ```
 
-每次使用新的会话目录，开始前确认没有其他服务连接。macOS 的已验证 USB 路径需要管理员权限；使用正常的系统授权或终端输入，不要让 Agent 收集密码。会话在收到 `close` 或空闲十分钟后结束。toolkit 将队列及响应文件交回客户端 UID，必要时用 `--client-uid` 指定；Wi-Fi 快照归 toolkit 目录的所有者。只检查、不修改时，省略 `--owner-authorized-write`。
+每次使用新的会话目录，开始前确认没有其他服务连接。macOS 的已验证路径通过 sudo 取得权限，并用 launchctl asuser 保持用户服务上下文；Linux 去掉 `/bin/launchctl asuser "$(id -u)"`。使用正常的系统授权或终端输入，不要让 Agent 收集密码。会话在收到 `close` 或超过配置的空闲时间后结束；示例设置为操作完成后空闲一小时。toolkit 将队列及响应文件交回客户端 UID，必要时用 `--client-uid` 指定；Wi-Fi 快照归 toolkit 目录的所有者。只检查、不修改时，省略 `--owner-authorized-write`。
 
 读取 `private/install-01/state.json`，等到 `state` 为 `ready`。两个终端及管理员进程都需要正确的 `ZVE10_TOOLKIT`、`WIFI_PYTHON`。随后在 Agent 使用的终端执行：
 
@@ -107,7 +107,7 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"close"}'
 ```
 
-等待服务端退出，确认 state.json 中 `state: closed`、`terminal_closed: true`、`service_returned: true`。收到 close 响应时，终端清理可能尚未结束，不能只看这一条响应。
+等待服务端退出，确认 state.json 中 `state: closed`、`service_returned: true`；Jiritsu 检查 `loader_files_removed: true`，旧终端检查 `terminal_closed: true`。收到 close 响应时，终端清理可能尚未结束，不能只看这一条响应。
 
 相机 OFF，等待存取指示灯熄灭，拔掉 USB 并取下电池约 30 秒。重新装入后，在 `private/verify-01` 建立新的**只读**会话，等待 `ready` 再检查。保持会话打开，请机主进入“网络 → Wi-Fi 设置 → 频带”，检查 2.4/5 GHz 选择页。
 
@@ -119,6 +119,9 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"boot-check"}'
 ```
 
-要求返回 `page1.type: TypeNB`、`page1.count: 5`，没有暖恢复标志，并由机主确认原生频带页能打开。`boot-check` 读取全局 Page1 对象；最终仍以相机屏幕验证。若补丁及属性正确但返回 TypeRK/4，请在 Agent 协助下按[暖镜像恢复流程](wbi.zh-CN.md)处理。WBI 失效是单独确认的 eMMC 操作，不能自动接在补丁之后执行。
+要求返回 `page1.type: TypeNB`、`page1.count: 5`，并由机主确认原生频带页能打开。`boot-check` 读取全局 Page1 对象；最终仍以相机屏幕验证。若补丁及属性正确但返回 TypeRK/4，请在 Agent 协助下按[暖镜像恢复流程](wbi.zh-CN.md)处理。WBI 失效是单独确认的 eMMC 操作，不能自动接在补丁之后执行。
 
 需要功能检查或活动无线状态采样时，按[验收与恢复](recovery.zh-CN.md)执行。完成后正常关闭验收会话，所有个人备份均不得混入公开发布包。
+
+
+更新后的暖镜像也可以恢复已解锁的五项菜单。菜单、文件和属性正确时，仅有暖恢复日志不是重复执行 WBI 的理由。

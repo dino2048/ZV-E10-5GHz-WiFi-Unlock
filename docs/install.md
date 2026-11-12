@@ -6,7 +6,7 @@ Before connecting, read the session error rules in [AGENTS.md](../AGENTS.md) and
 
 For `30110_06.2026060501`, append `--backend jiritsu --firmware 2.03 --owner-authorized-exec` to **every** `wifi.py serve` command below. This uses the same toolkit connection, queue, Backup actions and cleanup. System 2.02 keeps the existing terminal backend. Wait for `ready` before camera menu interaction.
 
-Jiritsu temporarily uploads our loader/script; it is not a zero-write inspection session. On close, wait for `closed`, `service_returned=true`, `loader_files_removed=true`, then switch off, unplug USB and remove the battery. The RAM process ends on power removal. Read [2.03 evidence and limitations](evidence.md). Toolkit Jiritsu raw backup is slow (about 1.3 MiB/s; roughly 25 minutes per user-area pass); a research wrapper with a dedicated 8 MiB RAM buffer/4 MiB chunks completed user+B0/B1 in one pass (940.956 seconds, 1.989 MiB/s). The public CLI still defaults to 512 KiB; independent double pass and restoration remain unvalidated. Keep a verified backup/recovery route before writing.
+Jiritsu temporarily uploads our loader/script; it is not a zero-write inspection session. On close, wait for `closed`, `service_returned=true`, `loader_files_removed=true`, then switch off, unplug USB and remove the battery. The RAM process ends on power removal. Read [2.03 evidence and limitations](evidence.md). Toolkit Jiritsu raw backup is slow (about 1.3 MiB/s; roughly 25 minutes per user-area pass); a research wrapper with a dedicated 8 MiB RAM buffer/4 MiB chunks completed user+B0/B1 in one pass (940.956 seconds, 1.989 MiB/s). The public raw-backup action accepts chunk_kib=4096; default remains 512 KiB. Independent double pass and restoration remain unvalidated. Keep a verified backup/recovery route before writing.
 
 
 **English** | [简体中文](install.zh-CN.md)
@@ -17,13 +17,13 @@ This is a supervised procedure, not an unattended installer. The byte-writing EL
 
 Use a Python 3 virtual environment and libusb. On macOS, install libusb through your normal package manager; `LIBUSB_PATH` can select the library. The common helper also checks Apple Silicon and Intel Homebrew locations. The demonstrated USB path is macOS; Linux needs working USB permissions and remains untested end to end for this package. Windows launchers are not supplied.
 
-This project uses [zv-e10-toolkit `2255eef`](https://github.com/dino2048/zv-e10-toolkit/commit/2255eef9a5ec7b459f19c444c29166f547949a67), which provides the generic Backup-property actions and the existing persistent-session extension interface. Clone the toolkit and check out the pinned commit:
+This project uses [zv-e10-toolkit `710e96d`](https://github.com/dino2048/zv-e10-toolkit/commit/710e96d99bcb8106111c2b533268e5afd10fa2a9), which provides the generic Backup-property actions and the existing persistent-session extension interface. Clone the toolkit and check out the pinned commit:
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach 2255eef9a5ec7b459f19c444c29166f547949a67
+git -C "$ZVE10_TOOLKIT" checkout --detach 710e96d99bcb8106111c2b533268e5afd10fa2a9
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
@@ -52,10 +52,10 @@ The owner must explicitly confirm the country of use and the proposed changes. O
 From the repository root, in a separate terminal:
 
 ```sh
-sudo ZVE10_TOOLKIT="$ZVE10_TOOLKIT" "$WIFI_PYTHON" -B tools/wifi.py serve --session-dir private/install-01 --owner-authorized-write
+sudo /bin/launchctl asuser "$(id -u)" /usr/bin/env ZVE10_TOOLKIT="$ZVE10_TOOLKIT" "$WIFI_PYTHON" -B tools/wifi.py serve --client-uid "$(id -u)" --idle-timeout 3600 --session-dir private/install-01 --owner-authorized-write
 ```
 
-Use a new directory for every session; resolve any prior session before starting another. `sudo` is needed for raw USB access on the demonstrated macOS path; use the host's normal privileged terminal mechanism, never ask an agent to collect a password. The toolkit session stays open until `close` or ten minutes of inactivity. The existing toolkit server hands its queue/results back to the client UID; `--client-uid` can specify the owner when needed. Wi-Fi snapshots use the toolkit checkout owner. Only run trusted code as root. For inspection only, omit `--owner-authorized-write`.
+Use a new directory for every session; resolve any prior session before starting another. `sudo` grants raw USB access; `launchctl asuser` keeps the macOS user-service context, as in the validated launcher. On Linux omit `/bin/launchctl asuser "$(id -u)"`; use the host's normal privileged terminal mechanism, never ask an agent to collect a password. The toolkit session stays open until `close` or the configured idle timeout after the last completed operation (one hour in the example). The existing toolkit server hands its queue/results back to the client UID; `--client-uid` can specify the owner when needed. Wi-Fi snapshots use the toolkit checkout owner. Only run trusted code as root. For inspection only, omit `--owner-authorized-write`.
 
 Read `private/install-01/state.json` and wait for `state: ready`. Keep `ZVE10_TOOLKIT` and `WIFI_PYTHON` set in both terminals (including the privileged process). In the agent's other terminal:
 
@@ -107,7 +107,7 @@ Run `inspect` again. Require the patched full hash, properties `01/02/16`, and `
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"close"}'
 ```
 
-Wait for server exit and require `state: closed`, `terminal_closed: true`, `service_returned: true` in state.json. The close response alone precedes terminal teardown and is not sufficient.
+Wait for server exit and require `state: closed`, `service_returned: true`, and `loader_files_removed: true` for Jiritsu or `terminal_closed: true` for the legacy terminal in state.json. The close response alone precedes terminal teardown and is not sufficient.
 
 Switch OFF, wait for the access lamp to go out, unplug USB and remove the battery for about 30 seconds. Refit it and start a new **read-only** session in `private/verify-01`, wait for `ready`, then inspect. Ask the owner to check Network → Wi-Fi Settings → Frequency Band and select 2.4/5 GHz while the session remains ready/open.
 
@@ -119,6 +119,9 @@ Run the read-only check in the new ready session:
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"boot-check"}'
 ```
 
-Require `page1.type: TypeNB`, `page1.count: 5`, no warm-resume markers, and the owner's confirmation that the native band page opens. `boot-check` reads the global Page1 object; the camera menu remains the final UI check. If the result is TypeRK/four items while the patch and properties match, follow [WBI recovery](wbi.md) under Agent supervision. WBI invalidation is a separate confirmed eMMC operation; it is never automatically chained to the patch.
+Require `page1.type: TypeNB`, `page1.count: 5`, the owner's confirmation that the native band page opens. `boot-check` reads the global Page1 object; the camera menu remains the final UI check. If the result is TypeRK/four items while the patch and properties match, follow [WBI recovery](wbi.md) under Agent supervision. WBI invalidation is a separate confirmed eMMC operation; it is never automatically chained to the patch.
 
 Use [verification steps](recovery.md) for optional functional checks and read-only active radio sampling. Close the verification session normally. Keep all private backups outside any public archive.
+
+
+An updated warm image can also restore the unlocked five-item menu. Warm-resume logs alone do not justify repeating WBI invalidation when menu, file and properties are correct.

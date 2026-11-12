@@ -15,6 +15,7 @@
 ```sh
 git clone https://github.com/ma1co/fwtool.py.git vendor/fwtool
 git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
+"$WIFI_PYTHON" -m pip install pycryptodomex PyYAML
 "$WIFI_PYTHON" -B tools/extract_sony_wbi.py --exe /path/to/Update_ZVE10V203.exe --fwtool vendor/fwtool --work-dir private/sony-extract --out private/sony-wbi/ud_wbi_drop.elf
 ```
 
@@ -52,6 +53,6 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 
 ## 4. 真正冷启动、验收与恢复
 
-正常关闭，等待 `state: closed`、`service_returned=true`。Jiritsu 还须确认 `loader_files_removed=true`，随后断电结束内存 shell；旧终端后端检查 `terminal_closed=true`。拔 USB、OFF 等访问灯熄灭、取电池约 30 秒再开机。在**新建且 ready 的只读会话**运行 `inspect`、`boot-check`，要求补丁/属性不变、无暖恢复标志、TypeNB 五项，并由机主确认原生频带菜单能进入。菜单操作期间保持会话打开，热点传图和路由器远程操作分别验证。
+正常关闭，等待 `state: closed`、`service_returned=true`。Jiritsu 还须确认 `loader_files_removed=true`，随后断电结束内存 shell；旧终端后端检查 `terminal_closed=true`。拔 USB、OFF 等访问灯熄灭、取电池约 30 秒再开机。在**新建且 ready 的只读会话**运行 `inspect`、`boot-check`，要求补丁/属性不变、TypeNB 五项，并由机主确认原生频带菜单能进入。菜单操作期间保持会话打开，热点传图和路由器远程操作分别验证。
 
 任何写入或回读异常都应停止，保留完整私密会话：`wbi-*-read1.bin`、`read2.bin`、`prewrite.bin`、`after.bin`、结果 JSON、已消耗令牌标记及 toolkit 响应和状态。超时不代表未写入。不要盲目重试，也不要在差异未查明时自动断电。按[恢复说明](recovery.zh-CN.md)交由具备能力的人复核；必要时可通过 toolkit fastboot，使用**本机原始 60 MiB 镜像及已确认的分区表**恢复，再完整回读比较。不能使用其他相机的 WBI，也不要仅为撤销成功失效而回刷旧镜像，它可能再次引入旧运行状态。本版本未实测 WBI 回刷恢复；失效旧镜像不会永久禁用正常暖启动。

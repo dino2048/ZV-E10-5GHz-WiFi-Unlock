@@ -144,6 +144,13 @@ def dispatch(camera, req, folder, allow_write):
                 'mounts': run(camera, 'busybox cat /proc/mounts'), 'snapshot': token}
     if action == 'boot-check':
         return boot_check(camera)
+    if action == 'radio-status':
+        query = req.get('query', 'status')
+        if query not in ('country', 'status', 'channels', 'chanspecs'):
+            raise ValueError('Only country, status, channels or chanspecs may be queried')
+        result = common.command(camera.dev, 'radio_status', '/usr/bin/wl -i wlan0 ' + query, 60)
+        return {'interface': 'wlan0', 'query': query, 'available': result['exit_code'] == 0,
+                'exit_code': result['exit_code'], 'output': result['output']}
     if not allow_write:
         raise ValueError('Read-only session; restart with --owner-authorized-write after owner confirmation')
     if action == 'backup-write':

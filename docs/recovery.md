@@ -8,20 +8,20 @@ Separate these observations in the installation record:
 
 1. Complete library hash/length and unique byte difference; three Backup values immediately reread.
 2. `/usr` is read-only, temporary helper removed, service closed normally.
-3. After USB disconnection and battery removal, a **new** persistent session again reports the patched full hash and `01/02/16`; run `boot-check` and require TypeNB/five items with no warm-resume marker. Battery removal alone does not prove a genuine cold boot.
+3. After USB disconnection and battery removal, a **new** persistent session again reports the patched full hash and `01/02/16`; run `boot-check` and require TypeNB/five items; record warm-resume markers as boot context. Battery removal alone does not prove a genuine cold boot.
 4. Owner can enter the native frequency menu. Menu evidence alone is not proof of 5 GHz radio operation.
 5. If requested, test phone photo transfer on the chosen 5 GHz direct hotspot, then separately test router connection and remote shooting. Record actual result and active channel; do not claim a speed improvement without a controlled benchmark.
 
 If the patch and properties match but Page1 remains TypeRK/four items, stop repeated writes and use the [Agent-assisted WBI procedure](wbi.md). Keep the complete `nflasha5` backup private; restore only this camera's own image if the verified recovery plan requires it. Invalidating an obsolete WBI does not permanently disable normal warm boot.
 
-Keep the session ready while asking the owner to use menus. During an active Wi-Fi connection, these allowlisted read commands can be requested, for example:
+Keep the session ready while asking the owner to use menus. During an active Wi-Fi connection, these fixed read-only radio queries can be requested, for example:
 
 ```sh
-"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"shell","command":"/usr/bin/wl -i wlan0 country"}'
-"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"shell","command":"/usr/bin/wl -i wlan0 status"}'
+"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"radio-status","query":"country"}'
+"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"radio-status","query":"status"}'
 ```
 
-`channels` and `chanspecs` are also allowlisted. Interfaces often disappear when Wi-Fi exits; an idle failure is not a profile measurement. Output may contain identifiers: keep it private. Expected historical China observations are XR/76 in GO and XR/143 in STA, not a promise of any specific selected channel. Driver lists are not compliance tests.
+`query` also accepts `channels` and `chanspecs`; arbitrary driver commands are refused. Interfaces often disappear when Wi-Fi exits; an idle failure is not a profile measurement. Output may contain identifiers: keep it private. Expected historical China observations are XR/76 in GO and XR/143 in STA, not a promise of any specific selected channel. Driver lists are not compliance tests.
 
 ## Normal rollback over USB-C
 
@@ -62,3 +62,6 @@ Use the same camera's verified original backup, correct partition table and exac
 ## WBI failure evidence
 
 See [WBI recovery](wbi.md) for exact commands. Preserve both full backups, prewrite/after reads and JSON diagnostics. Never automatically reflash old WBI. A consumed token or timeout requires review, not a retry; only this camera's own verified image may be used through the established fastboot recovery route, followed by complete readback. This release has no hardware-tested WBI restoration.
+
+
+An updated warm image can also restore the unlocked five-item menu. Warm-resume logs alone do not justify repeating WBI invalidation when menu, file and properties are correct.

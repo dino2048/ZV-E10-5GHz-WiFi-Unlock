@@ -15,6 +15,7 @@ Obtain the official ZV-E10 2.03 updater yourself from Sony support, retain its s
 ```sh
 git clone https://github.com/ma1co/fwtool.py.git vendor/fwtool
 git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
+"$WIFI_PYTHON" -m pip install pycryptodomex PyYAML
 "$WIFI_PYTHON" -B tools/extract_sony_wbi.py --exe /path/to/Update_ZVE10V203.exe --fwtool vendor/fwtool --work-dir private/sony-extract --out private/sony-wbi/ud_wbi_drop.elf
 ```
 
@@ -52,6 +53,6 @@ Sony's utility runs once. Even when its response reports failure, the tool attem
 
 ## 4. Cold boot, acceptance and recovery
 
-Close normally and wait for `state: closed` and `service_returned=true`. With Jiritsu also require `loader_files_removed=true`, then remove power to end the RAM shell; the legacy terminal uses `terminal_closed=true`. Unplug USB, switch OFF, wait for the access lamp, remove the battery for about 30 seconds, then boot. In a **new read-only ready session**, run `inspect` and `boot-check`. Require unchanged patch/properties, no warm-resume marker, TypeNB/five items, and owner confirmation that the native band menu opens. Keep the session open for menu interaction. Phone hotspot transfer and router remote operation are separate functional checks.
+Close normally and wait for `state: closed` and `service_returned=true`. With Jiritsu also require `loader_files_removed=true`, then remove power to end the RAM shell; the legacy terminal uses `terminal_closed=true`. Unplug USB, switch OFF, wait for the access lamp, remove the battery for about 30 seconds, then boot. In a **new read-only ready session**, run `inspect` and `boot-check`. Require unchanged patch/properties, TypeNB/five items, and owner confirmation that the native band menu opens. Keep the session open for menu interaction. Phone hotspot transfer and router remote operation are separate functional checks.
 
 If any write/readback error occurs, stop and preserve the entire private session, including `wbi-*-read1.bin`, `read2.bin`, `prewrite.bin`, `after.bin`, result JSON, consumed marker and toolkit responses/state. A timeout can mean writing occurred. Do not blindly retry or automatically power-cycle after an unexplained difference. Follow [recovery](recovery.md): qualified review may use toolkit fastboot with **this camera's exact original 60 MiB image and verified partition map**, followed by whole-partition readback. Never restore another camera's WBI, and never restore old WBI merely to undo successful invalidation: it can restore obsolete runtime state. This release has no hardware-tested WBI rollback. Normal warm boot is not permanently disabled.

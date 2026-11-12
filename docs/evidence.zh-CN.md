@@ -49,7 +49,7 @@ Jiritsu 的“持续会话”指命令保留同一个 shell 的状态，不是�
 
 每块相机/主机 SHA-256 一致，三个保存文件经电脑完整重读校验。备份动作耗时 **940.956 秒，平均 1.989 MiB/s**，包含前置检查、元数据、保存校验及 RAM 挂载清理，不含 USB 会话建立和管理员等待；整个读取没有断联。
 
-大缓冲由研究封装管理，正式 toolkit CLI 仍默认 512 KiB；不得把 4 MiB 写成已有 CLI 选项。单遍运行中读取与独立双遍、原子快照、恢复验证是不同项目。备份范围不含 RPMB、OTP/eFuse 或隐藏区域。
+正式 toolkit raw-backup 动作支持 chunk_kib=4096 自动管理独立大缓冲；省略时默认 512 KiB。单遍运行中读取与独立双遍、原子快照、恢复验证是不同项目。备份范围不含 RPMB、OTP/eFuse 或隐藏区域。
 
 短读取消也已验证：保留未完成文件和取消清单，电脑重读一致，取消后连接可继续使用。结束时独立 RAM 挂载已卸载、挂载点删除，加载文件已确认移除，服务正常返回；最后由机主断电结束剩余 RAM shell。
 
@@ -70,4 +70,4 @@ Sony WBI 工具由用户自备的官方 2.03 更新包离线提取，包版本�
 - [IFT Sony 设备清单](https://www.ift.org.mx/node/19562)：ZV-E10 Type1DR 条目。
 - [NTC 2021 设备清单](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf)：A7C Type1DR 条目，印刷第 187 页。
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE)、[MIT 许可](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt)：服务协议实现；toolkit 固定版本为 `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`。
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `2255eef9a5ec7b459f19c444c29166f547949a67`。
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `710e96d99bcb8106111c2b533268e5afd10fa2a9`。

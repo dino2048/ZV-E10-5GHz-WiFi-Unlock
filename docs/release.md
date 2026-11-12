@@ -17,7 +17,7 @@
 - **Offline-validated integration:** target hashes, patch preconditions, simulated writes and restore flow; toolkit original-value guards, private snapshots, readback and normal/error teardown.
 - **Not fully hardware-validated:** the integrated Wi-Fi host tool and reverse-byte helper. Offline checks do not replace validation of real USB or filesystem failures.
 
-The dependency is pinned to toolkit commit `2255eef9a5ec7b459f19c444c29166f547949a67`; installation includes the exact checkout command. Results are in [offline-checks.json](offline-checks.json), a machine-readable result file whose field names are language-independent.
+The dependency is pinned to toolkit commit `710e96d99bcb8106111c2b533268e5afd10fa2a9`; installation includes the exact checkout command. Results are in [offline-checks.json](offline-checks.json), a machine-readable result file whose field names are language-independent.
 
 ## Checks without a camera
 

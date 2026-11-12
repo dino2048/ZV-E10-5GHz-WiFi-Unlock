@@ -265,5 +265,26 @@ class RawReadTests(unittest.TestCase):
             self.assertTrue(list(folder.glob('wbi-identity-*.json')))
 
 
+class RadioTests(unittest.TestCase):
+    def test_fixed_readonly_query_needs_no_write_mode(self):
+        with patch.object(wifi, 'check_firmware'), patch.object(wifi.common, 'command', return_value={'exit_code':0,'output':'XR/76'}) as run:
+            result = wifi.dispatch(Mock(), {'action':'radio-status','query':'country'}, Path('.'), False)
+            self.assertEqual(result['output'], 'XR/76')
+            run.assert_called_once_with(unittest.mock.ANY, 'radio_status', '/usr/bin/wl -i wlan0 country', 60)
+
+    def test_inactive_interface_is_a_diagnostic_not_a_service_exception(self):
+        with patch.object(wifi, 'check_firmware'), patch.object(wifi.common, 'command', return_value={'exit_code':1,'output':'interface not found'}):
+            result = wifi.dispatch(Mock(), {'action':'radio-status'}, Path('.'), False)
+            self.assertFalse(result['available'])
+            self.assertEqual(result['exit_code'],1)
+
+    def test_query_cannot_set_driver_state_or_inject_shell(self):
+        with patch.object(wifi, 'check_firmware'), patch.object(wifi.common, 'command') as run:
+            for query in ('country US', 'status; reboot', 'up', 'down'):
+                with self.assertRaises(ValueError):
+                    wifi.dispatch(Mock(), {'action':'radio-status','query':query}, Path('.'), False)
+            run.assert_not_called()
+
+
 if __name__ == '__main__':
     unittest.main()

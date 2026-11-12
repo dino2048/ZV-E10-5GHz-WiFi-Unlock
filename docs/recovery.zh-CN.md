@@ -8,7 +8,7 @@
 
 1. 完整目标库哈希、长度及唯一字节差异；三个 Backup 属性写后立即读回。
 2. `/usr` 恢复只读，临时程序已删除，服务会话正常关闭。
-3. 拔 USB、取电池后，在**新会话**中再次读到完整补丁哈希及 `01/02/16`；执行 `boot-check`，要求 TypeNB 五项且没有暖恢复标志。单靠取电池不能证明真正冷启动。
+3. 拔 USB、取电池后，在**新会话**中再次读到完整补丁哈希及 `01/02/16`；执行 `boot-check`，要求 TypeNB 五项，并记录暖恢复标志作为启动背景。单靠取电池不能证明真正冷启动。
 4. 机主可以进入原生频带菜单。菜单出现与 5 GHz 无线实际工作分别记录。
 5. 如需功能测试，先验证 5 GHz 相机热点传图，再分别检查路由器连接和远程拍摄，记录结果及活动信道。未做受控测速时不填写速度提升数据。
 
@@ -17,8 +17,8 @@
 请机主操作菜单前保持会话为 `ready`。Wi-Fi 正在工作时，可提交如下只读查询：
 
 ```sh
-"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"shell","command":"/usr/bin/wl -i wlan0 country"}'
-"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"shell","command":"/usr/bin/wl -i wlan0 status"}'
+"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"radio-status","query":"country"}'
+"$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"radio-status","query":"status"}'
 ```
 
 还可查询 `channels`、`chanspecs`。退出 Wi-Fi 后接口常会消失，此时查询失败不能用来判断地区配置。输出可能包含设备标识，应私密保存。历史中国大陆实验中，热点 GO 读到 XR/76，路由器 STA 读到 XR/143；实际选择信道随环境变化。驱动列出的信道不是合规测试结果。
@@ -62,3 +62,6 @@ USB-C 服务终端需要相机正常启动到相应服务。严重文件系统�
 ## WBI 失败证据
 
 实际命令见[暖镜像恢复](wbi.zh-CN.md)。保留完整双备份、写前/写后读数及 JSON 诊断；不自动回刷旧 WBI。令牌已消耗或命令超时必须先复核，不能直接重试。如确需恢复，只能通过已确认的 fastboot 恢复途径使用本机原始镜像，并完整回读比较。本版本未实测 WBI 回刷恢复。
+
+
+更新后的暖镜像也可以恢复已解锁的五项菜单。菜单、文件和属性正确时，仅有暖恢复日志不是重复执行 WBI 的理由。

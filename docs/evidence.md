@@ -49,7 +49,7 @@ A dedicated 8 MiB tmpfs and 4 MiB chunks read:
 
 Camera/host hashes matched for every chunk, followed by full saved-file host rereads. The action took **940.956 seconds, averaging 1.989 MiB/s**, including preflight, metadata, saved-file verification and RAM mount cleanup; USB setup/admin waiting are excluded. No disconnect occurred during the read.
 
-A research wrapper managed the larger buffer; the public toolkit CLI still defaults to 512 KiB. Do not invent a public 4 MiB switch. A live single pass, independent double pass, atomic snapshot and restore validation are distinct. Scope excludes RPMB, OTP/eFuse and hidden areas.
+The public toolkit raw-backup action accepts chunk_kib=4096 and automatically manages the dedicated buffer; omission keeps the 512 KiB default. A live single pass, independent double pass, atomic snapshot and restore validation are distinct. Scope excludes RPMB, OTP/eFuse and hidden areas.
 
 Short-read cancellation also retained an incomplete file/manifest with matching host reread, and the connection remained usable. The dedicated mount and mountpoint were removed, loader cleanup was verified and service returned normally. Owner power removal ends the remaining RAM shell.
 
@@ -70,4 +70,4 @@ The Sony WBI utility is extracted offline from the owner's official 2.03 package
 - [IFT Sony equipment inventory](https://www.ift.org.mx/node/19562): ZV-E10 Type1DR entry.
 - [NTC 2021 inventory](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf): A7C Type1DR entry, printed page 187.
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE), [MIT license](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt): service protocol; the toolkit pins `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`.
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `2255eef9a5ec7b459f19c444c29166f547949a67`.
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `710e96d99bcb8106111c2b533268e5afd10fa2a9`.

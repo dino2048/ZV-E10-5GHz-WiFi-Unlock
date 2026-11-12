@@ -7,22 +7,22 @@
   ],
   "rejected_camera_systems": "Unknown or inconsistent versions; 2.03 without Jiritsu",
   "sony_tool_source_package": "Official ZV-E10 2.03 Windows updater, hash-pinned offline extraction rerun",
-  "toolkit_revision": "2255eef9a5ec7b459f19c444c29166f547949a67",
+  "toolkit_revision": "710e96d99bcb8106111c2b533268e5afd10fa2a9",
   "toolkit_source": "Based on GitHub main b0f6c90a4c0f835194adb1a8518280046cc0445f; local prepared commit, publish toolkit before Wi-Fi",
   "checks_passed": [
-    "21 Wi-Fi safety unit/simulation tests",
+    "24 Wi-Fi safety unit/simulation tests",
     "check_offline.py: AST, Page1 parser, boot-check, ARM inverse load segments, Backup guards and unknown-library refusal",
-    "Toolkit: 23 offline tests and 26 service shell guard checks",
+    "Toolkit: 31 offline tests and 26 service shell guard checks",
     "Official EXE extraction reproduced exact 6200-byte Sony tool",
     "Local Markdown targets and Git whitespace checks",
-    "Agent workflow links, proc/sys GET_FILE refusal, readonly busybox --list and session guidance"
+    "Agent workflow links, proc/sys GET_FILE refusal, readonly busybox --list and session guidance",
+    "Fresh Git-export checks, fixed readonly radio queries and launch/teardown documentation consistency"
   ],
   "not_hardware_validated": [
-    "Packaged Jiritsu/slow-backup/Wi-Fi refactor",
-    "Additional identity guards and new cancellation handling",
+    "Formal chunk_kib RAM-buffer lifecycle integration (failure-tested offline; underlying full-read sequence hardware-tested)",
+    "Integrated Wi-Fi write/restore host entry point and reverse-byte helper",
     "2.03 actual 5 GHz hotspot/router functions",
-    "WBI restoration and real USB/power failure handling",
-    "Independent 2.03 double pass, atomic consistency and restoration"
+    "Independent 2.03 double pass, atomic consistency, restoration and real USB/power-failure behavior"
   ],
   "underlying_hardware_evidence": "See evidence.md for firmware differences and hardware validation; offline checks are listed separately",
   "not_repeated": [
