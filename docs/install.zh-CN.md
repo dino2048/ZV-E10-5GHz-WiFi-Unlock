@@ -1,10 +1,12 @@
 # AI Agent 辅助安装
 
+连接前先读根目录 [AGENTS.md](../AGENTS.md) 中的会话防错规则，并读取所固定 toolkit 的 `AGENTS.md` 与 `linux/docs/agent-workflow.zh-CN.md`：先查命令/内存挂载，复用唯一会话，完成全部校验后统一清理。不得把诊断命令失败直接当成 USB 断联。
+
 ## 系统 2.03 的连接方式
 
 系统为 `30110_06.2026060501` 时，下文**每次** `wifi.py serve` 都追加 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。继续复用 toolkit 的唯一连接、请求队列、Backup 操作和清理；2.02 保留原终端后端。必须等待 `ready` 后才让机主操作菜单。
 
-Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](firmware-203.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；完整 2.03 镜像尚未实机验收。写入前仍需核对可靠备份和恢复途径。
+Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](firmware-203.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；独立 8 MiB RAM 缓冲/4 MiB 分块的研究封装已完成 2.03 用户区+B0/B1 单遍（940.956 秒，1.989 MiB/s）；正式 CLI 默认仍为 512 KiB，独立双遍及恢复未验收。写入前仍需核对可靠备份和恢复途径。
 
 
 **简体中文** | [English](install.md)
@@ -15,13 +17,13 @@ Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机�
 
 需要 Python 3 虚拟环境和 libusb。macOS 可通过常用包管理器安装 libusb；也可用 `LIBUSB_PATH` 指定库路径。toolkit 会检查 Apple Silicon 和 Intel Homebrew 的常用路径。已有实机流程使用 macOS；本项目尚未在 Linux 上完整验证，未提供 Windows 启动器。
 
-本项目使用 [zv-e10-toolkit `6a2ce8c`](https://github.com/dino2048/zv-e10-toolkit/commit/6a2ce8c87bb39edb6fbee010a5ed8401e51443b3) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
+本项目使用 [zv-e10-toolkit `2255eef`](https://github.com/dino2048/zv-e10-toolkit/commit/2255eef9a5ec7b459f19c444c29166f547949a67) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach 6a2ce8c87bb39edb6fbee010a5ed8401e51443b3
+git -C "$ZVE10_TOOLKIT" checkout --detach 2255eef9a5ec7b459f19c444c29166f547949a67
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help

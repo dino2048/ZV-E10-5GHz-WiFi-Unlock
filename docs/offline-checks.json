@@ -7,25 +7,33 @@
   ],
   "rejected_camera_systems": "Unknown or inconsistent versions; 2.03 without Jiritsu",
   "sony_tool_source_package": "Official ZV-E10 2.03 Windows updater, hash-pinned offline extraction rerun",
-  "toolkit_revision": "6a2ce8c87bb39edb6fbee010a5ed8401e51443b3",
+  "toolkit_revision": "2255eef9a5ec7b459f19c444c29166f547949a67",
   "toolkit_source": "Based on GitHub main b0f6c90a4c0f835194adb1a8518280046cc0445f; local prepared commit, publish toolkit before Wi-Fi",
   "checks_passed": [
     "21 Wi-Fi safety unit/simulation tests",
     "check_offline.py: AST, Page1 parser, boot-check, ARM inverse load segments, Backup guards and unknown-library refusal",
-    "Toolkit: 20 offline tests and 25 service shell guard checks",
+    "Toolkit: 23 offline tests and 26 service shell guard checks",
     "Official EXE extraction reproduced exact 6200-byte Sony tool",
-    "Local Markdown targets and Git whitespace checks"
+    "Local Markdown targets and Git whitespace checks",
+    "Agent workflow links, proc/sys GET_FILE refusal, readonly busybox --list and session guidance"
   ],
   "not_hardware_validated": [
     "Packaged Jiritsu/slow-backup/Wi-Fi refactor",
     "Additional identity guards and new cancellation handling",
-    "Complete 2.03 user+boot image and double pass",
     "2.03 actual 5 GHz hotspot/router functions",
-    "WBI restoration and real USB/power failure handling"
+    "WBI restoration and real USB/power failure handling",
+    "Independent 2.03 double pass, atomic consistency and restoration"
   ],
   "underlying_hardware_evidence": "See firmware-203.md and evidence.md; separate from packaged integration tests",
   "not_repeated": [
-    "Camera connection or modification during release preparation"
+    "No Wi-Fi/property/WBI writes during subsequent backup validation"
   ],
-  "environment_scope": "Owner-designated Python virtual environment; no system Python packages"
+  "environment_scope": "Owner-designated Python virtual environment; no system Python packages",
+  "subsequent_hardware_validation_20261112": {
+    "full_backup": "User+B0+B1 single pass, 1962934272 bytes; chunk and host reread hashes matched",
+    "speed": "940.956 seconds / 1.989 MiB/s, research wrapper with dedicated 8 MiB tmpfs and 4 MiB chunks",
+    "cancellation": "Short default backup cancelled with partial manifest; connection remained usable",
+    "wifi_readonly": "Patch/properties matched; runtime TypeNB/5 observed",
+    "cleanup": "Temporary mount/files removed; service returned"
+  }
 }

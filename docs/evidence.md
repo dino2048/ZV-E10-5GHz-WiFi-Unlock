@@ -51,4 +51,4 @@ The region table derives from static analysis of original A7C 2.03 Backup templa
 - [IFT Sony equipment inventory](https://www.ift.org.mx/node/19562): ZV-E10 Type1DR entry.
 - [NTC 2021 inventory](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf): A7C Type1DR entry, printed page 187.
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE), [MIT license](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt): service protocol; the toolkit pins `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`.
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `6a2ce8c87bb39edb6fbee010a5ed8401e51443b3`.
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `2255eef9a5ec7b459f19c444c29166f547949a67`.

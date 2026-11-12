@@ -51,4 +51,4 @@
 - [IFT Sony 设备清单](https://www.ift.org.mx/node/19562)：ZV-E10 Type1DR 条目。
 - [NTC 2021 设备清单](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf)：A7C Type1DR 条目，印刷第 187 页。
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE)、[MIT 许可](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt)：服务协议实现；toolkit 固定版本为 `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`。
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `6a2ce8c87bb39edb6fbee010a5ed8401e51443b3`。
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `2255eef9a5ec7b459f19c444c29166f547949a67`。

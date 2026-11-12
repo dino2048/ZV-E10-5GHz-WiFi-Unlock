@@ -1,5 +1,8 @@
 # ZV-E10 2.03 evidence and limitations
 
+**Latest complete single-pass hardware result (2026-11-12):** A dedicated 8 MiB tmpfs and 4 MiB chunks read the entire user area plus B0/B1: 1,962,934,272 bytes. Camera/host chunk hashes and complete saved-file host rereads matched. The backup action took 940.956 seconds, averaging 1.989 MiB/s, including preflight, metadata, saved-file verification and RAM mount cleanup; USB-session setup/admin waiting are excluded. No disconnect occurred during the read; mount/helper cleanup and service close succeeded. This is one live-system pass, not double-pass or restore validation. A research wrapper managed the larger buffer; the public CLI still defaults to 512 KiB. Earlier partial-read/1.3 MiB/s observations below are historical.
+
+
 **English** | [简体中文](firmware-203.zh-CN.md)
 
 These are the 2026-11-12 observations on one first-generation ZV-E10 upgraded officially from 2.02 to **2.03**, `/version.txt` = `30110_06.2026060501`. The packaged host refactor has offline tests; this record describes its underlying camera procedure.
@@ -8,7 +11,7 @@ These are the 2026-11-12 observations on one first-generation ZV-E10 upgraded of
 
 The old terminal path failed and FileControl returned `0x80` with no data on this device. The Jiritsu loader executed a persistent root shell: PID, variables and working directory survived subsequent commands. This is a temporary session, not root installed across reboots. The name alone does not establish that Jiritsu is an officially documented repair interface.
 
-Root `dd` read 512 KiB chunks into tmpfs, transferred by Jiritsu, with camera/host SHA-256 comparison. Speed was about **1.3 MiB/s**, around 25 minutes per user-area pass. The owner stopped the experiment at **1,681,915,904 bytes**. No complete 2.03 user+boot image or double pass was validated. A complete double fastboot backup had been verified on this same camera **before upgrading**, while it ran 2.02. See toolkit's Jiritsu documentation for the slow backup action and cancellation.
+Root `dd` read 512 KiB chunks into tmpfs, transferred by Jiritsu, with camera/host SHA-256 comparison. Speed was about **1.3 MiB/s**, around 25 minutes per user-area pass. The owner stopped the experiment at **1,681,915,904 bytes**. That preliminary run did not complete all regions; the subsequent complete single pass is reported above. Independent double-pass validation remains pending. A complete double fastboot backup had been verified on this same camera **before upgrading**, while it ran 2.02. See toolkit's Jiritsu documentation for the slow backup action and cancellation.
 
 Removing flash loader/script/output while the RAM shell remained alive, then closing service and removing power, succeeded. Stopping the shell first repeatedly caused subsequent USB reads to time out; the internal cause is unproven. The packaged cancellation and cleanup code have offline validation only.
 
