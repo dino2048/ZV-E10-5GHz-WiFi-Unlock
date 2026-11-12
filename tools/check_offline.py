@@ -58,6 +58,7 @@ def main():
     parser.add_argument('--factory', type=Path)
     parser.add_argument('--patched', type=Path)
     parser.add_argument('--tested-helper', type=Path)
+    parser.add_argument('--rebuilt-dir', type=Path)
     args = parser.parse_args()
     checks = []
     for p in (s.ROOT / 'tools').glob('*.py'):
@@ -88,6 +89,10 @@ def main():
     assert len(a[1][3]) == len(b[1][3]) and len(diffs) == 2
     assert all({a[1][3][i], b[1][3][i]} == {0x20, 0x1b} for i in diffs)
     checks.append('ARM ELF load segments: inverse helper differs only in two data bytes')
+    if args.rebuilt_dir:
+        for name in ('patch', 'restore'):
+            assert loads(args.rebuilt_dir/(name+'.arm')) == loads(s.ROOT/'tools'/(name+'.arm')), 'Rebuilt executable segments differ: ' + name
+        checks.append('Rebuilt ARM executable segments match pinned runtime helpers')
     if args.tested_helper:
         assert loads(args.tested_helper) == a
         assert hashlib.md5((s.ROOT/'tools/patch.arm').read_bytes()).hexdigest() == '8a1bd57091f544a758300b7151d94f05'

@@ -28,3 +28,6 @@ __pycache__/
 *.key
 .env
 .env.*
+
+# Rebuilt helper artifacts; runtime helpers remain pinned.
+/tools/build/

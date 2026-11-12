@@ -34,7 +34,7 @@ export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 仓库附带两个小型 ARM Linux 程序及汇编源码。`patch.arm` 就是历史实机成功使用的文件，MD5 为 `8a1bd57091f544a758300b7151d94f05`。`restore.arm` 使用相同源码反转原值和目标值构建，目前仅做离线检查。如需重建，使用支持 ARM 目标的 clang 和 GNU `arm-none-eabi-ld`：
 
 ```sh
-sh tools/build-helpers.sh
+PYTHON="$WIFI_PYTHON" sh tools/build-helpers.sh
 ```
 
 无需 ARM libc。源码文件名或工具链变化可能改变 ELF 符号和元数据；应核对加载段及指令、数据，不能只比较文件大小。见[发布核查](release.zh-CN.md)。
@@ -125,3 +125,6 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 
 
 更新后的暖镜像也可以恢复已解锁的五项菜单。菜单、文件和属性正确时，仅有暖恢复日志不是重复执行 WBI 的理由。
+
+
+重建结果保存在忽略的 tools/build/ 中，自动与正式助手的 ELF 执行段比较，不覆盖固定哈希的运行文件。

@@ -34,10 +34,10 @@ If you already have the updated toolkit, set `ZVE10_TOOLKIT` to that checkout an
 The two tiny ARM Linux helpers are supplied with assembly source. `patch.arm` is the exact camera-tested executable (MD5 `8a1bd57091f544a758300b7151d94f05`). `restore.arm` is built from the same source with expected/replacement bytes reversed; it has offline validation only. To rebuild, use clang with an ARM target and GNU `arm-none-eabi-ld`:
 
 ```sh
-sh tools/build-helpers.sh
+PYTHON="$WIFI_PYTHON" sh tools/build-helpers.sh
 ```
 
-No ARM libc is required. A different source filename/toolchain may change ELF symbols or metadata; validate load segments and instruction/data content, not just executable size. See [release checks](release.md).
+The build writes to ignored tools/build/ and checks both ELF load segments against the shipped helpers; it never overwrites the hash-pinned runtime files. No ARM libc is required. A different source filename/toolchain may change ELF symbols or metadata; validate load segments and instruction/data content, not just executable size. See [release checks](release.md).
 
 ## 2. Confirm the camera and backup
 
