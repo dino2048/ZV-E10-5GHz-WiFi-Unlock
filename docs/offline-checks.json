@@ -7,7 +7,7 @@
   ],
   "rejected_camera_systems": "Unknown or inconsistent versions; 2.03 without Jiritsu",
   "sony_tool_source_package": "Official ZV-E10 2.03 Windows updater, hash-pinned offline extraction rerun",
-  "toolkit_revision": "710e96d99bcb8106111c2b533268e5afd10fa2a9",
+  "toolkit_revision": "373bd482f9ef4e54ecaf5faf00e0afcbb4f041de",
   "toolkit_source": "Based on GitHub main b0f6c90a4c0f835194adb1a8518280046cc0445f; local prepared commit, publish toolkit before Wi-Fi",
   "checks_passed": [
     "24 Wi-Fi safety unit/simulation tests",

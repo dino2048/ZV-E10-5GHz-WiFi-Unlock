@@ -70,4 +70,4 @@ The Sony WBI utility is extracted offline from the owner's official 2.03 package
 - [IFT Sony equipment inventory](https://www.ift.org.mx/node/19562): ZV-E10 Type1DR entry.
 - [NTC 2021 inventory](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf): A7C Type1DR entry, printed page 187.
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE), [MIT license](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt): service protocol; the toolkit pins `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`.
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `710e96d99bcb8106111c2b533268e5afd10fa2a9`.
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `373bd482f9ef4e54ecaf5faf00e0afcbb4f041de`.

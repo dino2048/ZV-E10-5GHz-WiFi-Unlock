@@ -17,13 +17,13 @@ Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机�
 
 需要 Python 3 虚拟环境和 libusb。macOS 可通过常用包管理器安装 libusb；也可用 `LIBUSB_PATH` 指定库路径。toolkit 会检查 Apple Silicon 和 Intel Homebrew 的常用路径。已有实机流程使用 macOS；本项目尚未在 Linux 上完整验证，未提供 Windows 启动器。
 
-本项目使用 [zv-e10-toolkit `710e96d`](https://github.com/dino2048/zv-e10-toolkit/commit/710e96d99bcb8106111c2b533268e5afd10fa2a9) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
+本项目使用 [zv-e10-toolkit `373bd48`](https://github.com/dino2048/zv-e10-toolkit/commit/373bd482f9ef4e54ecaf5faf00e0afcbb4f041de) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach 710e96d99bcb8106111c2b533268e5afd10fa2a9
+git -C "$ZVE10_TOOLKIT" checkout --detach 373bd482f9ef4e54ecaf5faf00e0afcbb4f041de
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
