@@ -6,6 +6,7 @@ Never executes the updater, Sony ELF, or any extracted code.
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -38,7 +39,8 @@ def main():
     # Do not execute a modified extractor checkout.
     if subprocess.check_output(['git','-C',str(args.fwtool),'status','--porcelain','--untracked-files=no']):
         raise SystemExit('fwtool checkout has tracked modifications')
-    if not shutil.which('cabextract'):raise SystemExit('Install cabextract first')
+    extractor = 'expand' if os.name == 'nt' else 'cabextract'
+    if not shutil.which(extractor):raise SystemExit('Install ' + extractor + ' first')
     args.work_dir.mkdir(mode=0o700,parents=True,exist_ok=False)
     cab=args.work_dir/'installer.cab'
     table=bytes.maketrans(bytes(range(256)),bytes(range(255,-1,-1)))
@@ -49,7 +51,12 @@ def main():
             if not data:raise RuntimeError('Truncated updater')
             dst.write(data.translate(table));remaining-=len(data)
     if digest(cab)!=CAB_SHA:raise RuntimeError('CAB hash mismatch')
-    subprocess.run(['cabextract','-q','-F','*FirmwareData*','-d',str(args.work_dir/'cab'),str(cab)],check=True)
+    cab_dir = args.work_dir/'cab'
+    cab_dir.mkdir()
+    if os.name == 'nt':
+        subprocess.run(['expand','-F:FirmwareData_ZVE10V203.dat',str(cab),str(cab_dir)],check=True)
+    else:
+        subprocess.run(['cabextract','-q','-F','*FirmwareData*','-d',str(cab_dir),str(cab)],check=True)
     dat_path=args.work_dir/'cab/FirmwareData_ZVE10V203.dat'
     if digest(dat_path)!=DAT_SHA:raise RuntimeError('DAT hash mismatch')
     sys.path.insert(0,str(args.fwtool.resolve()))

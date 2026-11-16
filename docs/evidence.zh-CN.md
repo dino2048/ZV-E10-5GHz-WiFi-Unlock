@@ -2,7 +2,31 @@
 
 **简体中文** | [English](evidence.md)
 
-Sony ZV-E10 第一代的 **2.02 和 2.03 均已实机验证原生频段菜单解锁**。两个版本使用相同的 Wi-Fi 修改与 WBI 处理方法，主要差异在连接后端和备份传输方式。
+原生频段菜单已在第一代 ZV-E10 的 2.02、2.03 上验证。两个系统使用相同的一字节和三个属性修改，服务连接方式不同。
+
+## Windows 2.03
+
+测试环境为 Windows 10、libusb-win32 驱动和普通 PowerShell，使用配套 toolkit 的持久 Jiritsu 会话。
+
+| 操作 | 验证结果 |
+| --- | --- |
+| 环境准备与连接 | 安装脚本、版本核对、持久服务会话可用 |
+| 完整库读取 | 17,694,160 字节，分块哈希及保存文件完整哈希一致 |
+| 原始备份 | 用户区与 B0/B1 共 1,962,934,272 字节，接收和保存文件校验通过 |
+| Backup 属性 | 三个属性均完成真实改值、保存、读回及恢复 |
+| 菜单库补丁与恢复 | `restore` → `patch` 往返，每次完整哈希正确，唯一差异为 `0xD778E4`，结束时 `/usr` 只读 |
+| WBI 查询 | 完整分区只读查询可用 |
+| 正常关闭 | 临时加载文件清理、服务退出确认通过 |
+
+属性往返为 `01→00→01`、`02→01→02`、`16→15→16`。测试结束时库与属性恢复到测试前状态。Windows 原厂首次完整安装和 WBI 失效写入尚待实机确认；WBI 处理的底层流程已有 macOS 实机记录。
+
+Windows 使用按响应长度读取的服务传输，避免 Sony-PMCA-RE 的额外收尾读取；实现位于 toolkit 的 `linux/host/zve10_senser.py`。原始备份速度约 2.04 MiB/s；更多备份配置和测量见 [toolkit](https://github.com/dino2048/zv-e10-toolkit)。
+
+## 社区 Linux 2.03 报告
+
+[Issue #2](https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/2) 报告一台 ZV-E10 2.03 在 Linux x86_64 上完成备份、补丁、三个属性、WBI 失效和重新开机验收。使用 KR2/CEC 类 `B=14/C=23`（`01/0E/17`），实际使用地为尼泊尔；报告称菜单为 TypeNB 五项，可选择 5 GHz，热点活动配置读到 XR/88。
+
+这是社区单机报告，维护者尚未取得并独立复核完整记录。对方为绕过旧版中国属性检查做过本地修改；不能据此宣称未修改的旧版工具已直接完成该流程。手机传图、路由器侧 XR/144、功率及 DFS 行为没有验收。当前版本已取消 WBI 对地区值的固定要求，改为保存并核对当前属性；这项新代码经过离线测试。
 
 ## 版本对照
 
@@ -70,4 +94,4 @@ Sony WBI 工具由用户自备的官方 2.03 更新包离线提取，包版本�
 - [IFT Sony 设备清单](https://www.ift.org.mx/node/19562)：ZV-E10 Type1DR 条目。
 - [NTC 2021 设备清单](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf)：A7C Type1DR 条目，印刷第 187 页。
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE)、[MIT 许可](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt)：服务协议实现；toolkit 固定版本为 `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`。
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。本项目使用提交 `373bd482f9ef4e54ecaf5faf00e0afcbb4f041de`。
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)：备份、持久服务及恢复工具。使用配套、包含 Windows 安装与服务响应支持的 toolkit。

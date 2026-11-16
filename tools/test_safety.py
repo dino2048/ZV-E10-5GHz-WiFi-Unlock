@@ -1,5 +1,6 @@
 """Offline only: safety boundaries, transaction ordering, failed USB responses."""
 import json
+import os
 import struct
 import tempfile
 import unittest
@@ -21,6 +22,23 @@ class UploadTests(unittest.TestCase):
                          (0x1001, 16, b'\0\xff\0helper'))
         self.assertEqual(camera._sendAdjustControlPacket.call_count, 2)
         reader.assert_called_once_with(camera, path, 65536)
+
+    def test_jiritsu_target_uses_bounded_reader(self):
+        camera = Mock()
+        camera._jiritsu_backend.read_regular_chunks.return_value = b'known'
+        with patch.object(wifi.common, 'read_path') as direct:
+            self.assertEqual(wifi.read_file(camera, wifi.TARGET), b'known')
+        camera._jiritsu_backend.read_regular_chunks.assert_called_once_with(wifi.TARGET, wifi.SIZE, 256)
+        direct.assert_not_called()
+
+    def test_inspect_chunk_choice_is_limited_and_needs_the_backend(self):
+        for request, message in (({'chunk_kib': 128}, 'chunk_kib'), ({'chunk_kib': 8192}, 'chunk_kib')):
+            with patch.object(wifi, 'check_firmware'):
+                with self.assertRaisesRegex(ValueError, message):
+                    wifi.dispatch(Mock(), dict(request, action='inspect'), Path('.'), False)
+        with patch.object(wifi, 'check_firmware'):
+            with self.assertRaisesRegex(ValueError, 'Jiritsu backend'):
+                wifi.dispatch(Mock(_jiritsu_backend=None), {'action': 'inspect', 'chunk_kib': 512}, Path('.'), False)
 
     def test_bad_response_or_readback(self):
         for response, remote in ((b'', b'helper'), (struct.pack('<I', 1), b'helper'),
@@ -128,6 +146,20 @@ class WbiTests(unittest.TestCase):
         with patch.object(wbi, 'read_partition', side_effect=read):
             return wbi.dispatch(self.camera, request, self.folder, True, self.ops)
 
+    def test_status_is_read_only_and_skips_the_patch_identity(self):
+        for data, status in ((self.before, 'valid'), (self.after, 'already-invalid')):
+            def read(camera, folder, name, ops, data=data):
+                (folder / name).write_bytes(data)
+                return data
+            with patch.object(wbi, 'read_partition', side_effect=read):
+                report = wbi.dispatch(self.camera, {'action': 'wbi-status'}, self.folder, False, self.ops)
+            self.assertTrue(report['read_only'])
+            self.assertFalse(report['write_attempted'])
+            self.assertEqual(report['status'], status)
+        self.identity_mock.assert_called_with(self.camera, self.ops, self.folder, require_patch=False)
+        self.ops.upload_verified.assert_not_called()
+        self.ops.run.assert_not_called()
+
     def test_success_and_one_time_token(self):
         prepared = self.prepare()
         result = self.drop(prepared)
@@ -184,6 +216,27 @@ class WbiTests(unittest.TestCase):
             self.drop(prepared, [self.before[:-1] + b'z'])
         self.ops.upload_verified.assert_not_called()
 
+    def test_region_property_change_after_preparation_prevents_write(self):
+        self.identity_mock.return_value = {'device': wbi.DEVICE,
+            'backup': {'0x1071c54': '01', '0xa5000b': '0e', '0xa5000c': '17'}}
+        prepared = self.prepare()
+        self.identity_mock.return_value = {'device': wbi.DEVICE,
+            'backup': {'0x1071c54': '01', '0xa5000b': '02', '0xa5000c': '16'}}
+        with self.assertRaisesRegex(ValueError, 'identity changed'):
+            self.drop(prepared)
+        self.ops.upload_verified.assert_not_called()
+
+    def test_region_change_immediately_before_execution_never_runs_tool(self):
+        first = {'device': wbi.DEVICE, 'backup': {'B': '0e', 'C': '17'}}
+        self.identity_mock.return_value = first
+        prepared = self.prepare()
+        self.identity_mock.side_effect = [first,
+            {'device': wbi.DEVICE, 'backup': {'B': '03', 'C': '17'}}]
+        with self.assertRaisesRegex(ValueError, 'identity changed'):
+            self.drop(prepared)
+        self.assertFalse(any('./ud_wbi_drop.elf' in c.args[1]
+                             for c in self.ops.run.call_args_list))
+
     def test_unexpected_postwrite_difference_is_explicit_and_preserved(self):
         prepared = self.prepare()
         with self.assertRaisesRegex(RuntimeError, 'outside expected first 512'):
@@ -221,6 +274,34 @@ class WbiTests(unittest.TestCase):
 
 
 class RawReadTests(unittest.TestCase):
+    def identity_with_properties(self, folder, properties):
+        ops = Mock()
+        model = b'synthetic model identity'
+        system = b'30110_06.2026060501'
+        ops.check_firmware.return_value = system
+        ops.read_file.side_effect = [model, b'checked patched library']
+        ops.backup_properties.dispatch.side_effect = [{'value': v} for v in properties]
+        ops.KEYS = wifi.KEYS
+        ops.run.side_effect = ['252 5 61440 nflasha5', '252:5\n180224\n122880', '',
+                              'brw------- 1 root root 252, 5 Nov 7 08:00 /dev/nflasha5']
+        with patch.dict(wbi.SYSTEMS, {system: ('2.03', len(model), wbi.sha(model))}):
+            return wbi.identity(Mock(), ops, folder), ops
+
+    def test_wbi_identity_binds_any_current_region_without_allowlist(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for profile in (('01', '02', '16'), ('01', '0E', '17'),
+                            ('01', '03', '17'), ('01', '12', '19'), ('01', '14', '16')):
+                identity, ops = self.identity_with_properties(Path(directory), profile)
+                self.assertEqual(list(identity['backup'].values()), [v.lower() for v in profile])
+                self.assertEqual(identity['displayed_firmware'], '2.03')
+                ops.verify.assert_called_once()
+
+    def test_disabled_menu_and_malformed_properties_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for profile in (('00', '0e', '17'), ('01', 'not-a-byte', '17')):
+                with self.assertRaises(ValueError):
+                    self.identity_with_properties(Path(directory), profile)
+
     def test_bounded_stream_keeps_partial_and_complete_evidence(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(wbi, 'SIZE', 1024):
             folder = Path(directory)
@@ -232,7 +313,8 @@ class RawReadTests(unittest.TestCase):
                 return 0, None
             ops.common.read_path.side_effect = read
             self.assertEqual(wbi.read_partition(Mock(), folder, 'complete.bin', ops), b'a'*512+b'b'*512)
-            self.assertEqual((folder/'complete.bin').stat().st_mode & 0o777, 0o600)
+            if os.name != 'nt':
+                self.assertEqual((folder/'complete.bin').stat().st_mode & 0o777, 0o600)
             def short(camera, path, sink):
                 sink.write(b'partial')
                 return 0, None

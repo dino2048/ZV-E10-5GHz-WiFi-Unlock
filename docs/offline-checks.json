@@ -7,33 +7,42 @@
   ],
   "rejected_camera_systems": "Unknown or inconsistent versions; 2.03 without Jiritsu",
   "sony_tool_source_package": "Official ZV-E10 2.03 Windows updater, hash-pinned offline extraction rerun",
-  "toolkit_revision": "373bd482f9ef4e54ecaf5faf00e0afcbb4f041de",
-  "toolkit_source": "Based on GitHub main b0f6c90a4c0f835194adb1a8518280046cc0445f; local prepared commit, publish toolkit before Wi-Fi",
   "checks_passed": [
-    "24 Wi-Fi safety unit/simulation tests",
-    "check_offline.py: AST, Page1 parser, boot-check, ARM inverse load segments, Backup guards and unknown-library refusal",
-    "Toolkit: 31 offline tests and 26 service shell guard checks",
-    "Official EXE extraction reproduced exact 6200-byte Sony tool",
-    "Local Markdown targets and Git whitespace checks",
-    "Agent workflow links, proc/sys GET_FILE refusal, readonly busybox --list and session guidance",
-    "Fresh Git-export checks, fixed readonly radio queries and launch/teardown documentation consistency"
+    "31 Wi-Fi safety unit/simulation tests",
+    "check_offline.py: 7 checks including AST, Page1, boot markers, ARM inverse load segments, Backup guards and unknown-library refusal",
+    "Toolkit: 46 offline tests, 1 skipped; 26 service shell guard self-tests passed",
+    "Official EXE extraction reproduced exact 6200-byte Sony tool (historical non-Windows extraction evidence)"
   ],
   "not_hardware_validated": [
-    "Formal chunk_kib RAM-buffer lifecycle integration (failure-tested offline; underlying full-read sequence hardware-tested)",
-    "Integrated Wi-Fi write/restore host entry point and reverse-byte helper",
-    "2.03 actual 5 GHz hotspot/router functions",
-    "Independent 2.03 double pass, atomic consistency, restoration and real USB/power-failure behavior"
+    "Windows first-time factory installation and WBI invalidation writing; Windows expand.exe extraction",
+    "Independent Windows 2.03 double pass, atomic consistency, restoration and exhaustive USB/power-failure behavior",
+    "2.03 actual 5 GHz hotspot/router functions"
   ],
   "underlying_hardware_evidence": "See evidence.md for firmware differences and hardware validation; offline checks are listed separately",
-  "not_repeated": [
-    "No Wi-Fi/property/WBI writes during subsequent backup validation"
-  ],
   "environment_scope": "Owner-designated Python virtual environment; no system Python packages",
   "hardware_validation": {
     "full_backup": "User+B0+B1 single pass, 1962934272 bytes; chunk and host reread hashes matched",
     "speed": "940.956 seconds / 1.989 MiB/s, research wrapper with dedicated 8 MiB tmpfs and 4 MiB chunks",
     "cancellation": "Short default backup cancelled with partial manifest; connection remained usable",
     "wifi_readonly": "Patch/properties matched; runtime TypeNB/5 observed",
-    "cleanup": "Temporary mount/files removed; service returned"
+    "cleanup": "Temporary mount/files removed; service returned",
+    "windows_203": {
+      "host": "Windows 10; libusb-win32; ordinary non-administrator PowerShell",
+      "full_backup": "User+B0+B1 single pass, 1962934272 bytes, 916.141 seconds; saved-file hash verification passed",
+      "wifi": "Repeated full library reads, three Backup-property real value-change round trips, restore/patch round trip with full hashes and /usr restored read-only",
+      "wbi": "Read-only already-invalid status verified; no invalidation write performed",
+      "cleanup": "Normal close and temporary-loader cleanup verified for successful operations"
+    }
+  },
+  "recommended_before_install": "Two independent reads (passes=2), independent saved-file hashes and review of region comparisons; preserve and investigate differing user-area chunks.",
+  "toolkit_revision": "a647c551f51f47ee28b5129b0f3c7f84fa3ad80b",
+  "toolkit_source": "https://github.com/dino2048/zv-e10-toolkit",
+  "community_evidence": {
+    "source": "https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/2",
+    "host": "Linux x86_64",
+    "system": "ZV-E10 2.03",
+    "properties": "01/0e/17",
+    "reported": "Install, WBI invalidation, TypeNB/5 and active XR/88 hotspot",
+    "limitations": "Single camera; local modification of former China-only WBI gate; phone transfer and router side untested; maintainer raw-evidence review pending"
   }
 }

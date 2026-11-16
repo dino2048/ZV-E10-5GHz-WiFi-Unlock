@@ -2,15 +2,19 @@
 
 **简体中文** | [English](wbi.md)
 
-仅用于 **ZV-E10 第一代、已知系统 2.02 和 2.03**：单字节补丁与 Backup `01/02/16` 已正确，但运行时 Page1 仍为 TypeRK 四项，且原生频带菜单缺失。不要重复写补丁或属性。旧暖启动镜像（WBI）会保留旧页面，取电池 30 秒不能保证真正冷启动。
+仅用于 **ZV-E10 第一代、已知系统 2.02 和 2.03**：单字节补丁、菜单启用属性与所选 B/C 已正确，但运行时 Page1 仍为 TypeRK 四项，且原生频带菜单缺失。不要重复写补丁或属性。旧暖启动镜像（WBI）会保留旧页面，取电池 30 秒不能保证真正冷启动。
 
 两个版本均已验证相同的 WBI 流程：完整双备份、Sony 工具执行、完整写后回读，确认只有首 512 字节清零，重启后原生频段菜单可用。版本差异与功能结果统一见[验证说明](evidence.zh-CN.md)。
+
+Windows 2.03 已实测只读 WBI 查询；`expand.exe` 提取分支及 WBI 失效写入仍未验证。现有 Sony 工具失效旧镜像、重启后重新初始化菜单的流程，已有 macOS 主机与已知 2.03 相机的实机记录；这说明有可用处理办法，不代表 Windows 已完成该步骤的端到端验收。
+
+WBI 处理不选择或修改地区配置，也不按地区白名单限制。准备阶段读取并保存当前三个属性，执行前再次核对它们没有变化；菜单启用属性仍须为 `01`。B/C 的选择见[地区配置](regions.zh-CN.md)。
 
 ## 1. 离线准备 Sony 原厂工具
 
 实测 6,200 字节的 `ud_wbi_drop.elf` 来自 **Sony ZV-E10 2.03 官方更新包**，已在相机系统 **2.02 和 2.03** 执行。工具来源版本与相机系统版本是两回事，提取工具不需要升级相机。Sony ELF 和完整固件是专有文件，本仓库不分发。
 
-用户自行从 Sony 支持网站取得 ZV-E10 2.03 官方更新包，私密记录下载地址及包哈希，**不要运行升级器**。使用研究记录中的 [fwtool.py](https://github.com/ma1co/fwtool.py)，固定提交 `cdba742b73eed5981480c326aeb30033aabf0223`，按其要求在虚拟环境准备依赖。另需安装 `cabextract`。该 Windows EXE 内含异或编码的 CAB，不能直接交给 fwtool 解包；使用以下离线封装：
+用户自行从 Sony 支持网站取得 ZV-E10 2.03 官方更新包，私密记录下载地址及包哈希，**不要运行升级器**。使用研究记录中的 [fwtool.py](https://github.com/ma1co/fwtool.py)，固定提交 `cdba742b73eed5981480c326aeb30033aabf0223`，按其要求在虚拟环境准备依赖。macOS/Linux 另需安装 `cabextract`；Windows 使用系统自带的 `expand.exe`，此分支尚未用官方包实测。该 Windows EXE 内含异或编码的 CAB，不能直接交给 fwtool 解包；使用以下离线封装：
 
 ```sh
 git clone https://github.com/ma1co/fwtool.py.git vendor/fwtool
@@ -22,6 +26,16 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 离线筛选脚本只接受长度 6200、SHA-256 为 `f2a5b27a0c11d55a612d61e61e82c55278efb744052ecb8ec2cbbd8851d0ea6e` 的文件，不执行提取内容。解包失败或没有精确匹配时停止，不能替换为“类似”工具。本次已用机主的官方更新包重新运行封装，得到完全相同的 ELF。脚本检查 EXE、解码 CAB、DAT 及最终工具哈希，未知包立即停止。实际使用前还会再次核对工具。
 
 主机生成成功操作中使用的固定五行分区配置，SHA-256 为 `9bb1cba13c10ce88bd88d054dc49a823b3b1409ce6dfbeaeaa180f31d22744a8`。唯一 WBI 条目的起点为 `0x05800000`，长度 `0x03C00000`，类型 2。没有任意分区或路径覆盖选项。
+
+## 只读查询 WBI 状态
+
+`wbi-status` 只读一次 60 MiB 分区，返回 `valid` 或 `already-invalid`。它不要求库已修补、不要求中国属性、不使用 Sony 工具、不写入，可在任何相机状态下查询；也能把“根本没有有效 WBI”和“写入被阻止”区分开。
+
+```sh
+"$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-status"}'
+```
+
+它会在私密会话中保存一份 60 MiB 副本（结果 JSON 保留哈希）；空间紧张时审阅后删除副本即可。
 
 ## 2. 准备并审阅完整双备份
 
@@ -55,4 +69,4 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 
 正常关闭，等待 `state: closed`、`service_returned=true`。Jiritsu 还须确认 `loader_files_removed=true`，随后断电结束内存 shell；旧终端后端检查 `terminal_closed=true`。拔 USB、OFF 等访问灯熄灭、取电池约 30 秒再开机。在**新建且 ready 的只读会话**运行 `inspect`、`boot-check`，要求补丁/属性不变、TypeNB 五项，并由机主确认原生频带菜单能进入。菜单操作期间保持会话打开，热点传图和路由器远程操作分别验证。
 
-任何写入或回读异常都应停止，保留完整私密会话：`wbi-*-read1.bin`、`read2.bin`、`prewrite.bin`、`after.bin`、结果 JSON、已消耗令牌标记及 toolkit 响应和状态。超时不代表未写入。不要盲目重试，也不要在差异未查明时自动断电。按[恢复说明](recovery.zh-CN.md)交由具备能力的人复核；必要时可通过 toolkit fastboot，使用**本机原始 60 MiB 镜像及已确认的分区表**恢复，再完整回读比较。不能使用其他相机的 WBI，也不要仅为撤销成功失效而回刷旧镜像，它可能再次引入旧运行状态。本版本未实测 WBI 回刷恢复；失效旧镜像不会永久禁用正常暖启动。
+任何写入或回读异常都应停止，保留完整私密会话：`wbi-*-read1.bin`、`read2.bin`、`prewrite.bin`、`after.bin`、结果 JSON、已消耗令牌标记及 toolkit 响应和状态。超时不代表未写入。不要盲目重试，也不要在差异未查明时自动断电。按[恢复说明](recovery.zh-CN.md)交由具备能力的人复核；必要时可通过 toolkit fastboot，使用**本机原始 60 MiB 镜像及已确认的分区表**恢复，再完整回读比较。不能使用其他相机的 WBI，也不要仅为撤销成功失效而回刷旧镜像，它可能再次引入旧运行状态。本版本未实测 WBI 回刷恢复。

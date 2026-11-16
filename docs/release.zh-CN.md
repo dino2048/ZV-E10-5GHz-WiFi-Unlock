@@ -13,11 +13,9 @@
 
 ## 验证范围
 
-- **已有实机验证**：一字节加三个属性的底层修改、原生菜单、5 GHz 热点传图、5 GHz 路由器远程拍摄及安装后冷启动保留，见[实测记录](evidence.zh-CN.md)。
-- **已做离线验证**：Wi-Fi 集成工具的文件哈希、补丁前置检查、模拟读写及恢复流程；toolkit 的属性原值校验、私密快照、写后读回和正常／异常关闭。
-- **尚未完整实机验证**：整理后的 Wi-Fi 主机集成及反向单字节恢复程序。离线通过不能替代实际 USB 及文件系统故障下的验证。
+菜单解锁、属性及文件修改、WBI 处理、无线功能的系统与平台范围见[验证说明](evidence.zh-CN.md)。Windows 2.03 覆盖环境安装、服务连接、备份、检查和属性/库字节修改；WBI 写入尚待 Windows 实机确认。
 
-依赖固定为 toolkit 提交 `373bd482f9ef4e54ecaf5faf00e0afcbb4f041de`；安装文档包含确切 checkout 命令。验证结果记录在 [offline-checks.json](offline-checks.json)，它是机器可读结果文件，不需要翻译字段名称。
+配套依赖固定为 [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b)，已包含 Windows 安装与服务响应支持。离线检查项目见 [offline-checks.json](offline-checks.json)。
 
 ## 不连接相机的自检
 

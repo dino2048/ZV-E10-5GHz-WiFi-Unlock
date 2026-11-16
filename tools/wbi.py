@@ -46,7 +46,13 @@ def validate_partition(partitions, geometry, node=None):
     return {'device': DEVICE, 'dev': major + ':' + minor, 'start': 0x05800000, 'bytes': SIZE}
 
 
-def identity(camera, ops, folder):
+def identity(camera, ops, folder, require_patch=True):
+    """Verify the camera/WBI identity. ``require_patch`` gates the write path.
+
+    A read-only status query only needs the system, model and partition checks;
+    requiring the patched library there made the WBI state unreadable on a
+    factory or already-reverted camera.
+    """
     evidence = {}
     try:
         system = ops.check_firmware(camera)
@@ -58,19 +64,30 @@ def identity(camera, ops, folder):
         evidence['libObj'] = {'bytes': len(model_library), 'sha256': sha(model_library)}
         if len(model_library) != model_size or sha(model_library) != model_hash:
             raise ValueError('ZV-E10 model/system library fingerprint mismatch; STOP')
-        target = ops.read_file(camera, ops.TARGET)
-        evidence['CautionConfig'] = {'bytes': len(target), 'sha256': sha(target)}
-        ops.verify(target, ops.PATCHED)
-        values = {hex(k): ops.backup_properties.dispatch(
-            camera, {'action': 'backup-read', 'id': hex(k)}, folder, False)['value'] for k in ops.KEYS}
-        evidence['backup'] = values
-        if list(values.values()) != ['01', '02', '16']:
-            raise ValueError('WBI recovery requires verified patch and China properties 01/02/16; STOP')
+        if require_patch:
+            target = ops.read_file(camera, ops.TARGET)
+            evidence['CautionConfig'] = {'bytes': len(target), 'sha256': sha(target)}
+            ops.verify(target, ops.PATCHED)
+            values = {hex(k): ops.backup_properties.dispatch(
+                camera, {'action': 'backup-read', 'id': hex(k)}, folder, False)['value'] for k in ops.KEYS}
+            if any(not isinstance(v, str) or not re.fullmatch(r'[0-9a-fA-F]{2}', v)
+                   for v in values.values()):
+                raise ValueError('Malformed Backup-property readback; STOP')
+            values = {key: value.lower() for key, value in values.items()}
+            evidence['backup'] = values
+            if values[hex(ops.KEYS[0])] != '01':
+                raise ValueError('WBI menu recovery requires the frequency-menu property enabled; STOP')
         evidence['partitions'] = ops.run(camera, 'busybox cat /proc/partitions')
         evidence['geometry'] = ops.run(camera, 'busybox cat /sys/class/block/nflasha5/dev /sys/class/block/nflasha5/start /sys/class/block/nflasha5/size')
         ops.run(camera, 'test -b /dev/nflasha5 && test ! -L /dev/nflasha5')
         evidence['node'] = ops.run(camera, 'busybox ls -l /dev/nflasha5')
-        return dict(validate_partition(evidence['partitions'], evidence['geometry'], evidence['node']), displayed_firmware=label)
+        result = dict(validate_partition(evidence['partitions'], evidence['geometry'], evidence['node']), displayed_firmware=label)
+        if require_patch:
+            # WBI invalidation does not select or modify a region. Bind the
+            # actual properties to preparation so every later identity check
+            # rejects a changed configuration, regardless of the selected B/C.
+            result['backup'] = values
+        return result
     except Exception as exc:
         evidence['error'] = repr(exc)
         raise
@@ -102,16 +119,22 @@ def read_partition(camera, folder, name, ops):
     return path.read_bytes()
 
 
+def validate_state(data):
+    if len(data) != SIZE:
+        raise ValueError('Wrong full WBI size; STOP')
+    if data[:512] == bytes(512):
+        return 'already-invalid'
+    if data[:4] != b'WBI1':
+        raise ValueError('Unknown WBI header; no write')
+    return 'valid'
+
+
 def validate_backups(first, second):
     if len(first) != SIZE or len(second) != SIZE:
         raise ValueError('Wrong full WBI backup size; STOP')
     if sha(first) != sha(second) or first != second:
         raise ValueError('Double WBI backups differ; no write')
-    if first[:512] == bytes(512):
-        return 'already-invalid'
-    if first[:4] != b'WBI1':
-        raise ValueError('Unknown WBI header; no write')
-    return 'valid'
+    return validate_state(first)
 
 
 def validate_after(before, after):
@@ -129,6 +152,16 @@ def dispatch(camera, req, folder, allow_write, ops):
         # Each transaction gets a unique diagnostic file, including failures.
         ops.save_private(folder, prefix + '-result.json', (json.dumps(report, indent=2) + '\n').encode())
     try:
+        if req['action'] == 'wbi-status':
+            # Read-only: one partition read, no Sony tool, no token, no write.
+            # Works in any library state so the WBI itself can be inspected.
+            report['read_only'] = True
+            report['identity'] = identity(camera, ops, folder, require_patch=False)
+            data = read_partition(camera, folder, prefix + '-status.bin', ops)
+            report['wbi_sha256'] = sha(data)
+            report['status'] = validate_state(data)
+            record()
+            return report
         if req['action'] == 'wbi-prepare':
             if req.get('model') != 'ZV-E10' or req.get('displayed_firmware') not in ('2.02', '2.03'):
                 raise ValueError('Owner must confirm first-generation ZV-E10 and displayed system 2.02/2.03')

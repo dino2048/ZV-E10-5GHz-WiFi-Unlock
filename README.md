@@ -38,7 +38,7 @@ If the old four-item Wi-Fi menu remains after modification, follow the [Warm Boo
 
 ## Back up before installation
 
-**Strongly recommended: connect the camera to a computer using a USB-C data cable and back up its entire eMMC user area with [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit).** If firmware flashing fails, additional external hardware can be used for fastboot recovery.
+**Strongly recommended: connect the camera to a computer using a USB-C data cable and back up its entire eMMC user area and B0/B1 with [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit), read each region twice, verify the saved-file hashes and compare both passes (see the installation guide).** If firmware flashing fails, additional external hardware can be used for fastboot recovery.
 
 ## Install with an AI agent
 
@@ -51,9 +51,10 @@ cd ZV-E10-5GHz-WiFi-Unlock
 
 Suggested prompt:
 
-> Read AGENTS.md and docs/install.md. Help me check compatibility and back up my camera before installing. Ask me to confirm my actual country of use and the exact changes before writing. Preserve my original values and verify recovery steps.
+> Read AGENTS.md and docs/install.md. Help me check compatibility and back up my camera before installing. Ask me to confirm my actual country of use and the exact changes before writing. Preserve my original values and verify recovery steps. On Windows, follow the PowerShell preparation section and state the validated scope before writing.
 
 Installation reuses [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit). Have the agent follow the [installation guide](docs/install.md) to prepare the environment and perform the procedure.
+On Windows system 2.03, follow the [PowerShell setup](docs/install.md#windows-host-preparation-powershell), then use an Agent to guide backup, inspection, unlocking and verification. See [validation](docs/evidence.md) for platform coverage.
 
 [Installation](docs/install.md) · [Agent instructions](AGENTS.md) · [Verification and recovery](docs/recovery.md)
 
@@ -69,7 +70,7 @@ The table lists A7C factory profiles and corresponding XR revisions. **Only main
 | Japan J1 | 3 / 23 | 77 / 144 | Untested |
 | Europe CEC | 14 / 23 | 88 / 144 | Untested |
 | North America UC2 | 18 / 25 | 139 / 146 | Untested |
-| KR2 | 14 / 23 | 88 / 144 | Untested |
+| KR2 | 14 / 23 | 88 / 144 | Community 2.03 install/menu/XR88 report |
 | AP2 | 14 / 23 | 88 / 144 | Untested |
 | IN5 | 14 / 23 | 88 / 144 | Untested |
 | JE3 | 20 / 22 | 141 / 143 | Untested |
@@ -78,6 +79,8 @@ The table lists A7C factory profiles and corresponding XR revisions. **Only main
 | AF1 | 9 / 9 | 83 / 83 | Untested; factory band menu disabled |
 
 See the complete [region reference](docs/regions.md).
+
+A [community single-camera report](https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/2) covers Linux 2.03 installation, menus and the active hotspot profile with a KR2/CEC-class configuration; see [validation](docs/evidence.md) for scope.
 
 ## Technical material and credits
 

@@ -38,7 +38,7 @@ ZV-E10 与第一代 A7C 使用相同的 Murata Type 1DR 无线模块和 Broadcom
 
 ## 安装前备份
 
-**强烈建议先用 USB-C 数据线将相机连接到电脑，通过 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 完整备份本机 eMMC 用户区。** 如果固件刷写过程出现故障，可以通过外接额外硬件进行 fastboot 救砖。
+建议先用 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 对本机 eMMC 用户区和 B0/B1 各读取两遍，校验保存文件哈希并比较结果。备份与恢复准备见[安装说明](docs/install.zh-CN.md)。
 
 ## 用 AI Agent 安装
 
@@ -51,9 +51,10 @@ cd ZV-E10-5GHz-WiFi-Unlock
 
 建议提示词：
 
-> 请先读 AGENTS.md 和 docs/install.zh-CN.md，帮我核对兼容性、备份相机，再协助安装。写入前请让我确认实际使用国家或地区及修改范围，保存本机原始值，并核对恢复方法。
+> 请先读 AGENTS.md 和 docs/install.zh-CN.md，帮我核对兼容性、备份相机，再协助安装。写入前请让我确认实际使用国家或地区及修改范围，保存本机原始值，并核对恢复方法。Windows 上请按 PowerShell 准备步骤操作，并在写入前说明已验证范围。
 
 安装工具复用 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)，由 AI Agent 按[安装说明](docs/install.zh-CN.md)协助准备环境并操作。
+Windows 2.03 用户按[PowerShell 准备步骤](docs/install.zh-CN.md#windows-主机准备powershell)安装环境，再由 Agent 协助完成备份、检查、解锁与验收。平台适用范围见[验证说明](docs/evidence.zh-CN.md)。
 
 [安装步骤](docs/install.zh-CN.md) · [Agent 指引](AGENTS.md) · [验收和恢复](docs/recovery.zh-CN.md)
 
@@ -69,7 +70,7 @@ cd ZV-E10-5GHz-WiFi-Unlock
 | 日本 J1 | 3 / 23 | 77 / 144 | 未测试 |
 | 欧洲 CEC | 14 / 23 | 88 / 144 | 未测试 |
 | 北美 UC2 | 18 / 25 | 139 / 146 | 未测试 |
-| KR2 | 14 / 23 | 88 / 144 | 未测试 |
+| KR2 | 14 / 23 | 88 / 144 | 社区报告：2.03 安装、菜单、热点 XR/88 |
 | AP2 | 14 / 23 | 88 / 144 | 未测试 |
 | IN5 | 14 / 23 | 88 / 144 | 未测试 |
 | JE3 | 20 / 22 | 141 / 143 | 未测试 |
@@ -78,6 +79,8 @@ cd ZV-E10-5GHz-WiFi-Unlock
 | AF1 | 9 / 9 | 83 / 83 | 未测试；原厂频带菜单关闭 |
 
 完整对照见[地区配置说明](docs/regions.zh-CN.md)。
+
+Linux 2.03 与 KR2/CEC 类配置还有[社区单机成功报告](https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/2)，覆盖安装、菜单和热点配置读取；具体范围见[验证说明](docs/evidence.zh-CN.md)。
 
 ## 技术资料与致谢
 

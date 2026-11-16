@@ -2,15 +2,19 @@
 
 **English** | [简体中文](wbi.zh-CN.md)
 
-Use only on first-generation **ZV-E10 known systems 2.02 and 2.03**, after the one-byte patch and Backup `01/02/16` are verified, when Page1 is still TypeRK/four items and the native band menu is absent. Do not repeat the patch/property writes. An old WBI can restore the old page; battery removal for 30 seconds does not guarantee a true cold boot.
+Use only on first-generation **ZV-E10 known systems 2.02 and 2.03**, after the one-byte patch, enabled menu property and selected B/C values are verified, when Page1 is still TypeRK/four items and the native band menu is absent. Do not repeat the patch/property writes. An old WBI can restore the old page; battery removal for 30 seconds does not guarantee a true cold boot.
 
 Both versions have validated the same WBI procedure: two complete backups, the Sony utility and full after-read comparison confirming only the first 512 bytes zeroed, followed by a working native band menu after restart. See [firmware differences and validation results](evidence.md).
+
+On Windows system 2.03, read-only WBI status is hardware-validated; extraction via `expand.exe` and WBI invalidation writing remain unvalidated. The existing Sony-tool invalidation followed by menu reconstruction has hardware records on known 2.03 systems with macOS; this is the available recovery procedure, not a Windows end-to-end validation.
+
+WBI handling neither selects nor writes a region and has no region allowlist. Preparation saves the three current properties; execution rechecks that they have not changed. The menu-enable property must be `01`. See [region profiles](regions.md) for choosing B/C.
 
 ## 1. Obtain the original Sony tool offline
 
 The tested 6,200-byte `ud_wbi_drop.elf` came from the **Sony ZV-E10 2.03 official update package**, and was executed on **camera systems 2.02 and 2.03**. Package version and installed system version are different facts. Extraction does not require upgrading the camera. Sony's ELF and complete firmware are proprietary and are not bundled here.
 
-Obtain the official ZV-E10 2.03 updater yourself from Sony support, retain its source URL/package hash privately, and unpack it **offline without running the updater**. Use [fwtool.py](https://github.com/ma1co/fwtool.py), the same extractor recorded in the local research (commit `cdba742b73eed5981480c326aeb30033aabf0223`); follow its requirements in a virtual environment. Install `cabextract` and fwtool's Python dependencies in your virtual environment. The pinned Windows EXE contains an XOR-obfuscated CAB; passing it directly to fwtool is insufficient. Use our offline wrapper:
+Obtain the official ZV-E10 2.03 updater yourself from Sony support, retain its source URL/package hash privately, and unpack it **offline without running the updater**. Use [fwtool.py](https://github.com/ma1co/fwtool.py), the same extractor recorded in the local research (commit `cdba742b73eed5981480c326aeb30033aabf0223`); follow its requirements in a virtual environment. Install fwtool's Python dependencies; macOS/Linux also need `cabextract`, while Windows uses the system `expand.exe` (this branch has not yet been tested with the official package). The pinned Windows EXE contains an XOR-obfuscated CAB; passing it directly to fwtool is insufficient. Use our offline wrapper:
 
 ```sh
 git clone https://github.com/ma1co/fwtool.py.git vendor/fwtool
@@ -22,6 +26,16 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 The offline selector requires SHA-256 `f2a5b27a0c11d55a612d61e61e82c55278efb744052ecb8ec2cbbd8851d0ea6e` and length 6200. It never executes extracted code. If extraction fails or no exact file matches, stop; do not substitute a similar ELF. The wrapper was rerun against the owner's official package and reproduced this exact ELF. It verifies the EXE, decoded CAB, DAT and final tool hashes; unknown packages stop. The utility is checked again before every proposed use.
 
 The host generates the exact five-entry partition configuration used in the successful run, SHA-256 `9bb1cba13c10ce88bd88d054dc49a823b3b1409ce6dfbeaeaa180f31d22744a8`. Its only WBI entry is start `0x05800000`, length `0x03C00000`, type 2. No arbitrary partition/path override is accepted.
+
+## Read-only WBI status
+
+`wbi-status` reads the 60 MiB partition once and reports `valid` or `already-invalid`. It does not require the patched library or China properties, does not use the Sony tool and never writes. Use it to inspect the WBI in any camera state; it also separates "no valid WBI exists" from "a write is blocked".
+
+```sh
+"$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-status"}'
+```
+
+It saves one 60 MiB copy in the private session (the result JSON keeps the hash); delete the copy after review if space is needed.
 
 ## 2. Prepare and review two full backups
 
@@ -55,4 +69,4 @@ Sony's utility runs once. Even when its response reports failure, the tool attem
 
 Close normally and wait for `state: closed` and `service_returned=true`. With Jiritsu also require `loader_files_removed=true`, then remove power to end the RAM shell; the legacy terminal uses `terminal_closed=true`. Unplug USB, switch OFF, wait for the access lamp, remove the battery for about 30 seconds, then boot. In a **new read-only ready session**, run `inspect` and `boot-check`. Require unchanged patch/properties, TypeNB/five items, and owner confirmation that the native band menu opens. Keep the session open for menu interaction. Phone hotspot transfer and router remote operation are separate functional checks.
 
-If any write/readback error occurs, stop and preserve the entire private session, including `wbi-*-read1.bin`, `read2.bin`, `prewrite.bin`, `after.bin`, result JSON, consumed marker and toolkit responses/state. A timeout can mean writing occurred. Do not blindly retry or automatically power-cycle after an unexplained difference. Follow [recovery](recovery.md): qualified review may use toolkit fastboot with **this camera's exact original 60 MiB image and verified partition map**, followed by whole-partition readback. Never restore another camera's WBI, and never restore old WBI merely to undo successful invalidation: it can restore obsolete runtime state. This release has no hardware-tested WBI rollback. Normal warm boot is not permanently disabled.
+If any write/readback error occurs, stop and preserve the entire private session, including `wbi-*-read1.bin`, `read2.bin`, `prewrite.bin`, `after.bin`, result JSON, consumed marker and toolkit responses/state. A timeout can mean writing occurred. Do not blindly retry or automatically power-cycle after an unexplained difference. Follow [recovery](recovery.md): qualified review may use toolkit fastboot with **this camera's exact original 60 MiB image and verified partition map**, followed by whole-partition readback. Never restore another camera's WBI, and never restore old WBI merely to undo successful invalidation: it can restore obsolete runtime state. This release has no hardware-tested WBI rollback.

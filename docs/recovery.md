@@ -8,7 +8,7 @@ Separate these observations in the installation record:
 
 1. Complete library hash/length and unique byte difference; three Backup values immediately reread.
 2. `/usr` is read-only, temporary helper removed, service closed normally.
-3. After USB disconnection and battery removal, a **new** persistent session again reports the patched full hash and `01/02/16`; run `boot-check` and require TypeNB/five items; record warm-resume markers as boot context. Battery removal alone does not prove a genuine cold boot.
+3. After USB disconnection and battery removal, a **new** persistent session again reports the patched full hash and menu property `01` with the selected B/C values; run `boot-check` and require TypeNB/five items; record warm-resume markers as boot context. Battery removal alone does not prove a genuine cold boot.
 4. Owner can enter the native frequency menu. Menu evidence alone is not proof of 5 GHz radio operation.
 5. If requested, test phone photo transfer on the chosen 5 GHz direct hotspot, then separately test router connection and remote shooting. Record actual result and active channel; do not claim a speed improvement without a controlled benchmark.
 
@@ -43,7 +43,7 @@ Restore each Backup property using `backup-write` with its **currently inspected
 
 Do not overwrite normal user settings by restoring an entire old Backup database. Do not set unrelated radio power/model fields. If the saved original values are outside this wrapper's limited supported range, stop for review; don't bypass the check. An already-restored property/library can be skipped after verification.
 
-Inspect, close normally, confirm teardown, and cold boot as in installation. Start a new read-only session, inspect factory hash/original properties, and verify original behavior. The reverse-byte helper has offline checks; the complete rollback integration has not been validated on hardware.
+Inspect, close normally, confirm teardown, and cold boot as in installation. Start a new read-only session, inspect factory hash/original properties, and verify original behavior. The reverse-byte helper and property restoration were exercised in Windows 2.03 round trips; factory behavior still requires verification after your own restoration.
 
 ## Failed or interrupted installation
 

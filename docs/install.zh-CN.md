@@ -1,37 +1,54 @@
 # AI Agent 辅助安装
 
-连接前先读根目录 [AGENTS.md](../AGENTS.md) 中的会话防错规则，并读取所固定 toolkit 的 `AGENTS.md` 与 `linux/docs/agent-workflow.zh-CN.md`：先查命令/内存挂载，复用唯一会话，完成全部校验后统一清理。不得把诊断命令失败直接当成 USB 断联。
-
-## 系统 2.03 的连接方式
-
-系统为 `30110_06.2026060501` 时，下文**每次** `wifi.py serve` 都追加 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。继续复用 toolkit 的唯一连接、请求队列、Backup 操作和清理；2.02 保留原终端后端。必须等待 `ready` 后才让机主操作菜单。
-
-Jiritsu 会临时上传自有载荷/脚本，因此检查会话也不是相机端零写入。结束时等待 `closed`、`service_returned=true`、`loader_files_removed=true`，再关机、拔 USB、取电池；内存进程随断电结束。见 [2.03 实测及限制](evidence.zh-CN.md)。toolkit 的 Jiritsu 原始备份约 1.3 MiB/s，用户区单遍约 25 分钟；独立 8 MiB RAM 缓冲/4 MiB 分块的研究封装已完成 2.03 用户区+B0/B1 单遍（940.956 秒，1.989 MiB/s）；正式 raw-backup 可设置 chunk_kib=4096；默认 512 KiB，独立双遍及恢复未验收。写入前仍需核对可靠备份和恢复途径。
-
-
 **简体中文** | [English](install.md)
 
-本流程需要用户与 Agent 配合完成。系统 2.02 的单字节写入、Jiritsu 上传和底层服务、Backup 操作已有实机记录；`wifi.py` 只负责 Wi-Fi 专用操作，直接调用 zv-e10-toolkit 的服务端、客户端、传输方法和通用 Backup 接口。Wi-Fi 主机工具集成已完成离线检查，验证范围见[许可与验证范围](release.zh-CN.md)。操作前先读 [AGENTS.md](../AGENTS.md) 和[恢复说明](recovery.zh-CN.md)。
+本指南由用户与 AI Agent 配合执行，使用配套 toolkit 完成连接、备份和修改。Windows 的操作入口面向 ZV-E10 第一代 2.03；平台范围见[验证说明](evidence.zh-CN.md)。
+
+2.03 的所有服务端命令都要带 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。Jiritsu 会临时上传加载程序和脚本，结束后按本文清理并断电。先读 [AGENTS.md](../AGENTS.md) 和[恢复说明](recovery.zh-CN.md)。
 
 ## 1. 准备环境，暂不连接相机
 
-需要 Python 3 虚拟环境和 libusb。macOS 可通过常用包管理器安装 libusb；也可用 `LIBUSB_PATH` 指定库路径。toolkit 会检查 Apple Silicon 和 Intel Homebrew 的常用路径。已有实机流程使用 macOS；本项目尚未在 Linux 上完整验证，未提供 Windows 启动器。
+需要 Python 3.10+、Git 和 libusb。macOS 使用系统中的 libusb，Windows 按下节脚本准备环境与驱动；Linux 2.03 已有社区安装成功报告，具体范围见[验证说明](evidence.zh-CN.md#社区-linux-203-报告)。
 
-本项目使用 [zv-e10-toolkit `373bd48`](https://github.com/dino2048/zv-e10-toolkit/commit/373bd482f9ef4e54ecaf5faf00e0afcbb4f041de) 提供的通用 Backup 属性接口和持久会话扩展入口。克隆后切换到以下固定提交：
+### Windows 主机准备（PowerShell）
+
+安装 Python 3.10+、Git，并确保 `py` 与 `git` 在 PATH 中。将两个配套仓库放在同一个父目录（`ZV-E10-5GHz-WiFi-Unlock` 和 `zv-e10-toolkit`），在 Wi-Fi 项目根目录运行；也可用 `-Toolkit` 指定 toolkit 的位置：
+
+```powershell
+git clone https://github.com/dino2048/zv-e10-toolkit.git ..\zv-e10-toolkit
+git -C ..\zv-e10-toolkit checkout --detach a647c551f51f47ee28b5129b0f3c7f84fa3ad80b
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup-windows.ps1
+$env:ZVE10_TOOLKIT = (Resolve-Path ..\zv-e10-toolkit).Path
+$wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
+& $wifiPython -B .\tools\check_offline.py
+& $wifiPython -B -m unittest discover -s tools -p test_safety.py -v
+```
+
+已有 toolkit 目录时不要重复克隆或覆盖改动；先核对现有目录，再由 Agent 切换到上述固定提交。
+
+准备脚本调用配套 toolkit 自己的 `linux/scripts/setup-windows.ps1`，由 toolkit 建立虚拟环境并固定 Sony-PMCA-RE 提交；不连接相机，也不修改 toolkit 源码。Windows 的 `chmod` 不控制目录访问权限，toolkit 用当前 Windows 用户的 SID 设置会话目录 ACL。私密会话仍应保存在本机可信磁盘。
+
+下载依赖需要代理时，在命令后加 `-Proxy http://127.0.0.1:7897`（换成你自己的地址）。pip 默认不读取 `HTTP_PROXY`/`HTTPS_PROXY`；同一代理也会用于克隆 Sony-PMCA-RE。若代理下 pip 报 SSL 错误，先在新建的环境里升级 pip（`...\.venv\Scripts\python.exe -m pip install --upgrade pip`）：实测 Python 3.10 自带的 pip 23.0.1 在某个代理下失败，pip 26.3 正常。
+
+USB 服务模式还需要检查驱动：Sony-PMCA-RE 的 Windows 流程要求分别给海量存储模式与服务模式安装 `libusb-win32` 驱动。用 [Zadig](https://zadig.akeo.ie/) 打开 Options → List All Devices，选中相机的 `054C:0D95` 存储接口安装 **libusb-win32**；相机切换到服务模式后，再给 `054C:0336` 装同一驱动。此后 Windows 不再把相机当作磁盘挂载；工具用完请在设备管理器恢复原驱动。若 Python 找不到已安装的驱动库，用 `LIBUSB0_PATH` 指向对应的 `libusb0.dll`。使用 libusb-win32 时不要设置 `ZVE10_LIBUSB1`；其他后端见 toolkit 说明。已验证的 Windows 会话在普通、非管理员 PowerShell 中运行；如果打开设备报 access denied，再用管理员 PowerShell 启动服务端。
+
+Windows 2.03 的只读会话已验证（见证据记录）。对新电脑、新驱动或新相机，仍应先只读建会话、`inspect`、正常 `close`，核对 `loader_files_removed` 和 `service_returned` 后再考虑安装。
+
+各主机统一使用 [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b)，提供通用 Backup 操作、持久会话及 Windows 传输支持。macOS/Linux 克隆后切换到同一固定提交：
 
 ```sh
 mkdir -p vendor
 git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach 373bd482f9ef4e54ecaf5faf00e0afcbb4f041de
+git -C "$ZVE10_TOOLKIT" checkout --detach a647c551f51f47ee28b5129b0f3c7f84fa3ad80b
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
 ```
 
-已有更新版 toolkit 时，将 `ZVE10_TOOLKIT` 指向该目录，`WIFI_PYTHON` 指向其解释器即可，不必复制代码或重复建立环境。用户指定了解释器时优先使用。toolkit 的安装脚本负责依赖及固定版本 Sony-PMCA-RE；本项目不另存一套公共工具、依赖清单、服务端或客户端，也不会自动修改外部 toolkit。
+已有更新版 toolkit 时，将 `ZVE10_TOOLKIT` 指向该目录，`WIFI_PYTHON` 指向其解释器即可，不必复制代码或重复建立环境。用户指定了解释器时优先使用。toolkit 的安装脚本负责依赖及固定版本 Sony-PMCA-RE；本项目不另存一套公共工具、依赖清单、服务端或客户端。Windows、macOS 和 Linux 使用同一固定 toolkit 提交。
 
-仓库附带两个小型 ARM Linux 程序及汇编源码。`patch.arm` 就是历史实机成功使用的文件，MD5 为 `8a1bd57091f544a758300b7151d94f05`。`restore.arm` 使用相同源码反转原值和目标值构建，目前仅做离线检查。如需重建，使用支持 ARM 目标的 clang 和 GNU `arm-none-eabi-ld`：
+仓库附带两个小型 ARM Linux 程序及汇编源码。`patch.arm` 就是历史实机成功使用的文件，MD5 为 `8a1bd57091f544a758300b7151d94f05`。`restore.arm` 使用相同源码反转原值和目标值构建，已用于 Windows 恢复/补丁往返。如需重建，使用支持 ARM 目标的 clang 和 GNU `arm-none-eabi-ld`：
 
 ```sh
 PYTHON="$WIFI_PYTHON" sh tools/build-helpers.sh
@@ -45,7 +62,7 @@ PYTHON="$WIFI_PYTHON" sh tools/build-helpers.sh
 
 将 USB 连接设为 **海量存储器（Mass Storage）**，使用支持数据传输的 USB-C 线。相机处于 USB 存储模式时可能无法操作菜单，应先建立持久服务会话，再请机主操作菜单。
 
-机主需要明确确认实际使用国家或地区及修改范围。目前普通安装流程仅采用已实测的中国大陆 B=2/C=22。型号、固件、地区或目标文件不明时停止，不自动升级或降级固件。
+机主需要明确确认实际使用国家或地区及修改范围。本文示例采用中国大陆 B=2/C=22；其他使用地按[地区配置](regions.zh-CN.md)选择并确认对应 B/C，写入与验收始终使用这组值。型号、固件、适用配置或目标文件不明时停止，不自动升级或降级固件。
 
 ## 3. 保持一个服务会话
 
@@ -57,13 +74,25 @@ sudo /bin/launchctl asuser "$(id -u)" /usr/bin/env ZVE10_TOOLKIT="$ZVE10_TOOLKIT
 
 每次使用新的会话目录，开始前确认没有其他服务连接。macOS 的已验证路径通过 sudo 取得权限，并用 launchctl asuser 保持用户服务上下文；Linux 去掉 `/bin/launchctl asuser "$(id -u)"`。使用正常的系统授权或终端输入，不要让 Agent 收集密码。会话在收到 `close` 或超过配置的空闲时间后结束；示例设置为操作完成后空闲一小时。toolkit 将队列及响应文件交回客户端 UID，必要时用 `--client-uid` 指定；Wi-Fi 快照归 toolkit 目录的所有者。只检查、不修改时，省略 `--owner-authorized-write`。
 
-读取 `private/install-01/state.json`，等到 `state` 为 `ready`。两个终端及管理员进程都需要正确的 `ZVE10_TOOLKIT`、`WIFI_PYTHON`。随后在 Agent 使用的终端执行：
+Windows 使用同一 PowerShell 终端启动服务端；不传 `--client-uid`，也不用 `sudo`。下例为已验证的 2.03 只读入口，已包含三个 Jiritsu 参数：
+
+```powershell
+$env:ZVE10_TOOLKIT = (Resolve-Path ..\zv-e10-toolkit).Path
+$wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
+& $wifiPython -B .\tools\wifi.py serve --backend jiritsu --firmware 2.03 --owner-authorized-exec --idle-timeout 3600 --session-dir private\win-inspect-01
+```
+
+另开 PowerShell 终端设置相同的 `ZVE10_TOOLKIT` 与 `$wifiPython`，等待 `private\win-inspect-01\state.json` 为 `ready`，然后请求 `inspect`。Windows PowerShell 5 向原生程序传 JSON 时会剥掉普通双引号，须保留反斜杠转义：`$request = '{\"action\":\"inspect\"}'`；`& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 $request`。检查和备份期间保持这一个会话，不得在只读会话中执行 `patch`、`backup-write` 或 `wbi-drop`。
+
+macOS/Linux 的 shell 示例使用 `private/install-01`；Windows 使用上面的 PowerShell 请求和 `private/win-inspect-01`。等待所选会话的 `state` 为 `ready`，两个终端保持相同环境。macOS/Linux 的检查命令为：
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"inspect"}'
 ```
 
-`inspect` 会将完整目标库、两份 Backup 文件保存到私密会话目录，使用独立文件名避免覆盖，并返回三个属性值、挂载信息及快照编号。文件读取和终端操作共用同一个认证连接。认证本身可能更新 Sony 服务记账文件。
+`inspect` 会将完整目标库、两份 Backup 文件保存到私密会话目录，使用独立文件名避免覆盖，并返回三个属性值、挂载信息及快照编号。任何可能超过默认 360 秒的请求（例如服务端的 `raw-backup`）都要加 `--timeout 3600`。文件读取和终端操作共用同一个认证连接。认证本身可能更新 Sony 服务记账文件。
+
+2.03 的 `inspect` 可选 `chunk_kib` 为 256、512、1024、2048 或 4096；大于 512 时自动使用并清理独立 RAM 缓冲。
 
 原厂目标库长度必须为 **17,694,160 字节**，SHA-256 为：
 
@@ -73,6 +102,18 @@ sudo /bin/launchctl asuser "$(id -u)" /usr/bin/env ZVE10_TOOLKIT="$ZVE10_TOOLKIT
 
 将返回的原始属性值、型号、机内版本、确认的地区、备份位置及文件哈希记入私密安装记录。文件已经是补丁版时，先检查是否已完成安装，不重复运行 `patch`。
 
+### 写入前建议双遍备份（Windows 2.03）
+
+只读服务端进入 `ready` 后，保持同一会话，在新建写入会话前先对用户区和 B0/B1 **各独立读取两遍**。电脑至少预留 5 GiB 可用空间。在第二个 PowerShell 终端执行：
+
+```powershell
+$request = '{\"action\":\"raw-backup\",\"passes\":2,\"chunk_kib\":4096}'
+& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --timeout 7200 $request
+```
+
+私密保留两遍文件、`manifest.json` 和 `SHA256SUMS`。电脑独立重算每份保存文件的哈希并与清单比较，再审阅三个区域的 `comparisons`。`completed: true` 只代表读取完成，不保证用户区两遍完全相同；相机运行中可写数据可能变化。有差异时保留差异块清单，由 Agent 查清后再继续。
+
+
 ## 4. 执行已确认的最小修改
 
 Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次 Jiritsu SET_FILE2 将固定哈希的小程序传到 `/tmp/jiritsu`，使用 toolkit 的 Jiritsu GET_FILE 完整读回并在主机逐字节核对；随后临时改为可写挂载，原位修改一个字节，导出完整结果，检查哈希和唯一差异，最后恢复只读挂载并删除临时程序。
@@ -80,6 +121,21 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"patch"}'
 ```
+
+Windows 先完成并校验备份。将 `$request` 设为 `'{\"action\":\"close\"}'`，用同一请求命令关闭只读会话；等 `closed`、`service_returned=true`、`loader_files_removed=true` 后，关机、等存取灯熄灭、拔 USB、取电池约 30 秒，再装电池开机并重新连接。机主确认写入范围后，新建写入会话：
+
+```powershell
+& $wifiPython -B .\tools\wifi.py serve --backend jiritsu --firmware 2.03 --owner-authorized-exec --owner-authorized-write --idle-timeout 3600 --session-dir private\win-install-01
+```
+
+等待该会话为 `ready`，先在其中重新执行 `inspect`，与预检保存的库哈希和属性原值比较，再发送补丁请求（保留反斜杠转义）：
+
+```powershell
+$request = '{\"action\":\"patch\"}'
+& $wifiPython -B .\tools\wifi.py request --session private\win-install-01 $request
+```
+
+下面的 `backup-write` 请求同样处理。该步骤在 Windows 上做过往返验证，但**没有做原厂相机的首次安装验证**。
 
 要求返回 `only_difference: 0xd778e4`，补丁后 SHA-256 为：
 
@@ -101,7 +157,7 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 
 ## 5. 验收并结束会话
 
-再次执行 `inspect`，确认完整补丁哈希、属性 `01/02/16` 和 `/usr` 只读。私密保留修改前后文件，然后执行：
+再次执行 `inspect`，确认完整补丁哈希、菜单属性 `01` 和已选择的 B/C 值 和 `/usr` 只读。私密保留修改前后文件，然后执行：
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"close"}'
@@ -111,7 +167,7 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 
 相机 OFF，等待存取指示灯熄灭，拔掉 USB 并取下电池约 30 秒。重新装入后，在 `private/verify-01` 建立新的**只读**会话，等待 `ready` 再检查。保持会话打开，请机主进入“网络 → Wi-Fi 设置 → 频带”，检查 2.4/5 GHz 选择页。
 
-**暖启动检查：**取电池约 30 秒仍可能从相机保存的 Warm Boot Image 恢复旧菜单状态。实机曾在补丁和三个属性都正确时，运行中的 Wi-Fi 页仍是 TypeRK 四项；内核日志有 `PM: Low-level resume complete`。在验收会话中查看启动日志，并核对当前 Page1 是否为 TypeNB 五项。若仍为 TypeRK 四项或缺少「频带」，停止验收，保留日志与快照；不要重刷同一字节、重复写 Backup 或把取电池当作已经完成真正冷启动。该机经先备份完整 60 MiB `nflasha5`、再用 Sony 原厂工具仅清除其首 512 B 暖镜像入口、断电重启后，日志无暖恢复标志，Page1 和屏幕均恢复五项。现已提供独立的 `wbi-prepare` / `wbi-drop` 保护流程，详见[暖镜像恢复](wbi.zh-CN.md)，必须完整双备份、另行确认 eMMC 写入并完整回读。Sony 原厂工具需从用户自备官方更新包私密提取，不随仓库分发。
+**暖启动检查：**取电池约 30 秒仍可能从相机保存的 Warm Boot Image 恢复旧菜单状态。实机曾在补丁和三个属性都正确时，运行中的 Wi-Fi 页仍是 TypeRK 四项；内核日志有 `PM: Low-level resume complete`。在验收会话中查看启动日志，并核对当前 Page1 是否为 TypeNB 五项。若仍为 TypeRK 四项或缺少「频带」，停止验收，保留日志与快照；不要重刷同一字节、重复写 Backup 或把取电池当作已经完成真正冷启动。该机经先备份完整 60 MiB `nflasha5`、再用 Sony 原厂工具仅清除其首 512 B 暖镜像入口、断电重启后，日志无 `WARMBOOT` 行（内核的 `PM: Low-level resume` 和 `Waking up from system sleep` 在冷启动也会出现，不能单独作为暖启动证据），Page1 和屏幕均恢复五项。现已提供独立的 `wbi-prepare` / `wbi-drop` 保护流程，详见[暖镜像恢复](wbi.zh-CN.md)，必须完整双备份、另行确认 eMMC 写入并完整回读。Sony 原厂工具需从用户自备官方更新包私密提取，不随仓库分发。
 
 在新建且处于 `ready` 状态的只读会话中执行：
 

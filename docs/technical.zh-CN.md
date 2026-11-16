@@ -10,6 +10,8 @@
 
 Sony 在 60 MiB 的 `nflasha5` 分区保存 Warm Boot Image。本机 2.02 的补丁跳表与 Backup 值都正确时，暖恢复仍沿用旧的 TypeRK 四项 Page1，频带节点 `0x285` 未创建；取电池约 30 秒也未保证重新构建。备份并用 Sony 原厂工具使 WBI 入口失效后，下次启动没有暖恢复标志，全局和屏幕当前 Page1 均为 TypeNB 五项，`0x285` 已启用。机主确认原生菜单及 5 GHz 功能。安全验收见[暖镜像恢复流程](wbi.zh-CN.md)。这是 2.02 实机结果，2.03 的菜单恢复已另有记录，完整无线功能仍待验收。
 
+固件 dmesg 中的 `WARMBOOT` 行才是暖启动标志；内核的 `PM: Low-level resume complete` 和 `Waking up from system sleep` 在冷启动时也会出现，不能单独作为证据。`boot-check` 现在只根据 `WARMBOOT` 行判断 `warm_resume`（2026-11-16）。
+
 ## 原生菜单：TypeNB
 
 静态比较发现，第一代 A7C 的 Wi-Fi 页面选择 **TypeNB**，其中包含“频带”；ZV-E10 选择的 **TypeRK** 则不包含。将 `CautionConfig.so` 文件偏移 `0xD778E4` 的 `20` 改为 `1B`，就是切换原生页面选择，不需要移植 A7C 代码或另写菜单。

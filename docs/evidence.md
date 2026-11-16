@@ -2,7 +2,31 @@
 
 **English** | [简体中文](evidence.zh-CN.md)
 
-Native frequency-band menu unlocking has been verified on first-generation Sony ZV-E10 cameras running **2.02 and 2.03**. Both use the same Wi-Fi changes and WBI procedure; connection and backup transport are the main differences.
+Native frequency-band menus have been verified on the first-generation ZV-E10 with systems 2.02 and 2.03. Both use the same byte and three property changes, with different service backends.
+
+## Windows 2.03
+
+The test host was Windows 10 with libusb-win32 and ordinary PowerShell, using the companion toolkit's persistent Jiritsu session.
+
+| Operation | Result |
+| --- | --- |
+| Setup and connection | Setup script, exact version checks and persistent service connection passed |
+| Full library read | 17,694,160 bytes; chunk and independently reread saved-file hashes matched |
+| Raw backup | User area and B0/B1 totaled 1,962,934,272 bytes; receive and saved-file checks passed |
+| Backup properties | All three properties exercised real value changes, persistence, readback and restoration |
+| Library patch and restore | `restore` → `patch`; correct full hashes, sole difference at `0xD778E4`, `/usr` read-only at completion |
+| WBI status | Full-partition read-only status query passed |
+| Normal close | Temporary-loader cleanup and service return confirmed |
+
+Property round trips were `01→00→01`, `02→01→02` and `16→15→16`. The library and properties ended in their pre-test state. First-time factory installation and WBI invalidation writing on Windows await hardware confirmation; the underlying WBI procedure has macOS hardware evidence.
+
+Windows uses length-delimited service replies rather than Sony-PMCA-RE's extra trailing read; the implementation is toolkit's `linux/host/zve10_senser.py`. Measured raw-backup throughput was about 2.04 MiB/s; see the [toolkit](https://github.com/dino2048/zv-e10-toolkit) for backup configuration and measurements.
+
+## Community Linux 2.03 report
+
+[Issue #2](https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/2) reports a ZV-E10 2.03 installation on Linux x86_64, including backup, patch, three properties, WBI invalidation and restart acceptance. The KR2/CEC-class B=14/C=23 configuration (`01/0E/17`) was used in Nepal. The reporter observed TypeNB/five items, 5 GHz selection and an active XR/88 hotspot profile.
+
+This is a community single-camera report; maintainers have not independently reviewed the complete evidence. It included a local change to the old China-only WBI gate, so it does not establish an unmodified old-version installation. Phone transfer, XR/144 router operation, power and DFS behavior were not accepted. The current code removes the fixed region requirement from WBI and instead saves/rechecks the current properties; this new change has offline tests.
 
 ## Version comparison
 
@@ -70,4 +94,4 @@ The Sony WBI utility is extracted offline from the owner's official 2.03 package
 - [IFT Sony equipment inventory](https://www.ift.org.mx/node/19562): ZV-E10 Type1DR entry.
 - [NTC 2021 inventory](https://region7.ntc.gov.ph/wp-content/uploads/2024/01/RCE_08312021.pdf): A7C Type1DR entry, printed page 187.
 - [Sony-PMCA-RE](https://github.com/ma1co/Sony-PMCA-RE), [MIT license](https://github.com/ma1co/Sony-PMCA-RE/blob/master/LICENSE.txt): service protocol; the toolkit pins `a82f5baaa8e9c3d9f28f94699e860fb2e48cc8e0`.
-- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. This project uses commit `373bd482f9ef4e54ecaf5faf00e0afcbb4f041de`.
+- [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit): backup, persistent service and recovery. Use the companion toolkit with native Windows setup and service-reply support.

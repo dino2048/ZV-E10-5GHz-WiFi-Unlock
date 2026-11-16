@@ -74,14 +74,23 @@ def main():
     checks.append('Running Page1 parser rejects short/unknown layouts')
     maps = f'{base:08x}-18600000 r-xp 00000000 fc:0f 18311 /usr/lib/CautionConfig.so\n'
     node = page(base+s.TYPE_NB_VMA,5)
-    def fake_command(dev, name, cmd, timeout):
-        output = ('152\n' if 'pidof' in cmd else maps if '/maps' in cmd else
-                  node if 'dd if=/proc/' in cmd else '')
-        return {'exit_code':0 if output else 1,'output':output}
-    with patch.object(s.common,'command',side_effect=fake_command):
+    def fake_command(log=''):
+        def command(dev, name, cmd, timeout):
+            output = ('152\n' if 'pidof' in cmd else maps if '/maps' in cmd else
+                      node if 'dd if=/proc/' in cmd else log if 'dmesg' in cmd else '')
+            return {'exit_code':0 if output else 1,'output':output}
+        return command
+    with patch.object(s.common,'command',side_effect=fake_command()):
         boot = s.boot_check(type('Camera',(),{'dev':object()})())
-    assert boot['page1']['type']=='TypeNB' and not boot['warm_resume_markers']
+    assert boot['page1']['type']=='TypeNB' and boot['warm_resume'] is False
+    with patch.object(s.common,'command',side_effect=fake_command('WARMBOOT / PM: Low-level resume complete.\n')):
+        boot = s.boot_check(type('Camera',(),{'dev':object()})())
+    assert boot['warm_resume'] is True
+    with patch.object(s.common,'command',side_effect=fake_command('[0.02] PM: Waking up from system sleep.\n')):
+        boot = s.boot_check(type('Camera',(),{'dev':object()})())
+    assert boot['warm_resume'] is False
     checks.append('Read-only boot-check identifies running five-item Page1')
+    checks.append('Warm boot requires the WARMBOOT line, not the PM resume lines')
     a, b = loads(s.ROOT/'tools/patch.arm'), loads(s.ROOT/'tools/restore.arm')
     assert a[0] == b[0], 'Executable code/addresses must match'
     assert a[1][:3] == b[1][:3]

@@ -3,6 +3,7 @@
 No connection, queue, framing, authentication or teardown implementation here.
 """
 import argparse
+from contextlib import nullcontext
 import hashlib
 import json
 import os
@@ -74,10 +75,14 @@ def boot_check(camera):
     if log['exit_code'] not in (0, 1) or (log['exit_code'] == 1 and log['output'].strip()):
         raise RuntimeError('Boot-log check failed; STOP: ' + str(log))
     markers = [line.strip() for line in log['output'].splitlines() if line.strip()]
+    # Only the firmware's WARMBOOT line identifies a warm boot. The kernel's
+    # "PM: Low-level resume / Waking up from system sleep" lines also appear on
+    # cold boots (they come from PM initialization), so they cannot decide it.
+    warm = any('WARMBOOT' in line.upper() for line in markers)
     return {'pid': int(pid_text), 'caution_base': hex(base), 'page1_address': hex(address),
-            'page1': page, 'warm_resume_markers': markers,
-            'assessment': ('warm-resume detected' if markers else
-                           'no warm-resume marker observed; confirm menu on camera')}
+            'page1': page, 'warm_resume': warm, 'warm_resume_markers': markers,
+            'assessment': ('WARMBOOT line present; camera resumed from the warm image' if warm
+                           else 'no WARMBOOT line; cold boot')}
 
 
 def digest(data):
@@ -96,7 +101,10 @@ def run(camera, cmd):
     return result['output']
 
 
-def read_file(camera, path):
+def read_file(camera, path, chunk_kib=256):
+    backend = getattr(camera, '_jiritsu_backend', None)
+    if path == TARGET and backend is not None:
+        return backend.read_regular_chunks(path, SIZE, chunk_kib)
     common.set_terminal_timeout(camera, 30000)
     status, data = common.read_path(camera, path)
     if status not in (0, 1) or data is None:
@@ -131,17 +139,32 @@ def save_private(folder, name, data):
 def dispatch(camera, req, folder, allow_write):
     action = req.get('action')
     token = uuid.uuid4().hex
-    if action in ('wbi-prepare', 'wbi-drop'):
+    if action in ('wbi-status', 'wbi-prepare', 'wbi-drop'):
         return wbi.dispatch(camera, req, folder, allow_write, sys.modules[__name__])
     check_firmware(camera)
     if action == 'inspect':
-        data = read_file(camera, TARGET)
+        # Read-only chunk choice for the library: the 2.03 Jiritsu backend can
+        # use the same 512 KiB shared buffer or dedicated 8 MiB tmpfs that the
+        # raw backup uses. The default stays 256 KiB.
+        chunk_kib = req.get('chunk_kib', 256)
+        if type(chunk_kib) is not int or chunk_kib not in (256, 512, 1024, 2048, 4096):
+            raise ValueError('chunk_kib must be 256, 512, 1024, 2048 or 4096')
+        backend = getattr(camera, '_jiritsu_backend', None)
+        buffer = nullcontext()
+        if chunk_kib != 256:
+            if backend is None:
+                raise ValueError('chunk_kib requires the 2.03 Jiritsu backend')
+            if chunk_kib > 512:
+                buffer = backend.backup_buffer(chunk_kib)
+        with buffer:
+            data = read_file(camera, TARGET, chunk_kib)
+        timing = getattr(backend, 'last_regular_stats', None)
         values = {hex(k): backup_properties.dispatch(camera, {'action': 'backup-read', 'id': hex(k)}, folder, False)['value'] for k in KEYS}
         save_private(folder, token + '-CautionConfig.so', data)
         for path in ('/setting/Backup.bin', '/setting/Backup.bak'):
             save_private(folder, token + '-' + Path(path).name, read_file(camera, path))
-        return {'size': len(data), 'sha256': digest(data), 'backup': values,
-                'mounts': run(camera, 'busybox cat /proc/mounts'), 'snapshot': token}
+        return {'size': len(data), 'sha256': digest(data), 'backup': values, 'chunk_kib': chunk_kib,
+                'timing': timing, 'mounts': run(camera, 'busybox cat /proc/mounts'), 'snapshot': token}
     if action == 'boot-check':
         return boot_check(camera)
     if action == 'radio-status':
@@ -209,6 +232,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('mode', choices=('request',))
     parser.add_argument('--session', type=Path, required=True)
+    parser.add_argument('--timeout', type=float, default=360,
+                        help='seconds to wait for the response; raw backups need more')
     parser.add_argument('json_request')
     args = parser.parse_args()
     # Existing client owns queue serialization, response polling and timeouts.
@@ -216,7 +241,7 @@ def main():
     folder = args.session.resolve()
     if client.read_state(folder).get('state') != 'ready':
         raise SystemExit('Session is not ready')
-    answer = client.submit(folder, json.loads(args.json_request), timeout=360)
+    answer = client.submit(folder, json.loads(args.json_request), timeout=args.timeout)
     print(json.dumps(answer, indent=2))
     if 'error' in answer or 'refused' in answer:
         raise SystemExit(1)

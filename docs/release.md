@@ -13,11 +13,9 @@
 
 ## Validation scope
 
-- **Hardware-validated underlying procedure:** one byte plus three properties, native menu, 5 GHz hotspot photo transfer, remote shooting through a 5 GHz router, and post-install cold-boot persistence. See [test records](evidence.md).
-- **Offline-validated integration:** target hashes, patch preconditions, simulated writes and restore flow; toolkit original-value guards, private snapshots, readback and normal/error teardown.
-- **Not fully hardware-validated:** the integrated Wi-Fi host tool and reverse-byte helper. Offline checks do not replace validation of real USB or filesystem failures.
+See [validation](evidence.md) for system and platform coverage of menu unlocking, property/file changes, WBI handling and wireless functions. Windows 2.03 covers setup, service connection, backup, inspection and property/library changes; WBI writing awaits Windows hardware confirmation.
 
-The dependency is pinned to toolkit commit `373bd482f9ef4e54ecaf5faf00e0afcbb4f041de`; installation includes the exact checkout command. Results are in [offline-checks.json](offline-checks.json), a machine-readable result file whose field names are language-independent.
+The companion dependency is [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b), including Windows setup and service-reply support. Offline checks are listed in [offline-checks.json](offline-checks.json).
 
 ## Checks without a camera
 
