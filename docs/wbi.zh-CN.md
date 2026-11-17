@@ -35,6 +35,14 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-status"}'
 ```
 
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'wbi-status' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/wbi-01 --request-file $requestFile
+```
+
 它会在私密会话中保存一份 60 MiB 副本（结果 JSON 保留哈希）；空间紧张时审阅后删除副本即可。
 
 ## 2. 准备并审阅完整双备份
@@ -43,6 +51,14 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-prepare","model":"ZV-E10","displayed_firmware":"2.03","sony_tool":"private/sony-wbi/ud_wbi_drop.elf"}'
+```
+
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'wbi-prepare'; model = 'ZV-E10'; displayed_firmware = '2.03'; sony_tool = 'private/sony-wbi/ud_wbi_drop.elf' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/wbi-01 --request-file $requestFile
 ```
 
 `wbi-prepare` 不写相机。请求中必须填写实际屏幕版本（示例为 2.03）。它自动两读 `/version.txt`，并检查对应系统的 ZV-E10 `libObj.so` 指纹、完整补丁版 `CautionConfig.so` 哈希及三个属性。机型识别采用已知系统文件指纹与机主屏幕确认，不另行查询 USB 产品名称。接受 2.02 / `30110_05.2025031501` 与 2.03 / `30110_06.2026060501`，分别固定不同的 `libObj.so` 指纹。2.03 必须使用 Jiritsu 后端，未知系统停止。
@@ -59,6 +75,14 @@ git -C vendor/fwtool checkout --detach cdba742b73eed5981480c326aeb30033aabf0223
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-drop","prepared":"PREPARED_TOKEN","sony_tool":"private/sony-wbi/ud_wbi_drop.elf","confirm_emmc_write":"INVALIDATE WBI BACKUP_SHA256","recovery_ready":true}'
+```
+
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'wbi-drop'; prepared = 'PREPARED_TOKEN'; sony_tool = 'private/sony-wbi/ud_wbi_drop.elf'; confirm_emmc_write = 'INVALIDATE WBI BACKUP_SHA256'; recovery_ready = $true } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/wbi-01 --request-file $requestFile
 ```
 
 工具重新核对系统、文件指纹、属性、设备身份、保存的双备份，并新读完整分区与准备阶段比较。执行前先消耗令牌，防止盲目重试。Sony 原厂程序与生成的配置通过 Jiritsu SET_FILE2 上传，并用 **GET_FILE 完整读回，在主机逐字节比较**。不依赖相机 BusyBox 哈希或十六进制转储。

@@ -21,6 +21,16 @@
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"radio-status","query":"status"}'
 ```
 
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'radio-status'; query = 'country' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/verify-01 --request-file $requestFile
+@{ action = 'radio-status'; query = 'status' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/verify-01 --request-file $requestFile
+```
+
 还可查询 `channels`、`chanspecs`。退出 Wi-Fi 后接口常会消失，此时查询失败不能用来判断地区配置。输出可能包含设备标识，应私密保存。历史中国大陆实验中，热点 GO 读到 XR/76，路由器 STA 读到 XR/143；实际选择信道随环境变化。驱动列出的信道不是合规测试结果。
 
 ## 通过 USB-C 正常恢复
@@ -31,6 +41,14 @@
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/restore-01 '{"action":"restore"}'
 ```
 
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'restore' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/restore-01 --request-file $requestFile
+```
+
 恢复后要求原厂 SHA-256 为 `5ad8746a229da259fe00b297e8f897d682f7ae9a13393025b3d1c95a808e68d7`、长度 17,694,160 字节、唯一差异位于 `0xD778E4`，且 `/usr` 只读。
 
 逐项恢复 Backup 属性：`expected` 使用**刚检查到的当前值**，`value` 使用**本机安装前保存的原值**。历史实验相机的恢复示例如下，不代表其他相机的默认值：
@@ -39,6 +57,18 @@
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/restore-01 '{"action":"backup-write","id":"0x01071C54","expected":"01","value":"00"}'
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/restore-01 '{"action":"backup-write","id":"0x00A5000B","expected":"02","value":"09"}'
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/restore-01 '{"action":"backup-write","id":"0x00A5000C","expected":"16","value":"09"}'
+```
+
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'backup-write'; id = '0x01071C54'; expected = '01'; value = '00' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/restore-01 --request-file $requestFile
+@{ action = 'backup-write'; id = '0x00A5000B'; expected = '02'; value = '09' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/restore-01 --request-file $requestFile
+@{ action = 'backup-write'; id = '0x00A5000C'; expected = '16'; value = '09' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/restore-01 --request-file $requestFile
 ```
 
 不要整库恢复旧 Backup，以免覆盖正常用户设置；不要改变无关的无线电源模式或机型字段。原值超出本工具支持范围时停止检查，不绕过限制。已经恢复的属性或文件，检查后可跳过。

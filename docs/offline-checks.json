@@ -8,10 +8,11 @@
   "rejected_camera_systems": "Unknown or inconsistent versions; 2.03 without Jiritsu",
   "sony_tool_source_package": "Official ZV-E10 2.03 Windows updater, hash-pinned offline extraction rerun",
   "checks_passed": [
-    "31 Wi-Fi safety unit/simulation tests",
+    "34 Wi-Fi safety unit/simulation tests",
     "check_offline.py: 7 checks including AST, Page1, boot markers, ARM inverse load segments, Backup guards and unknown-library refusal",
-    "Toolkit: 49 offline tests, 48 passed, 1 skipped; 26 service shell guard self-tests passed",
-    "Official EXE extraction reproduced exact 6200-byte Sony tool (historical non-Windows extraction evidence)"
+    "Toolkit: 52 offline tests, 51 passed, 1 skipped; 26 service shell guard self-tests passed",
+    "Official EXE extraction reproduced exact 6200-byte Sony tool (historical non-Windows extraction evidence)",
+    "Windows PowerShell 5.1: request files preserve spaces, Unicode, quotes and WBI confirmation text without camera access; 42 PowerShell documentation blocks parse successfully"
   ],
   "not_hardware_validated": [
     "Windows first-time factory installation and WBI invalidation writing; Windows expand.exe extraction",
@@ -46,5 +47,5 @@
     "limitations": "Single camera; local modification of former China-only WBI gate; phone transfer and router side untested; maintainer raw-evidence review pending"
   },
   "toolkit_dependency": "Latest main; update before connecting and run offline checks",
-  "toolkit_tested_revision": "9d2b5a8961820b9e143457764f571581d8bfc52c"
+  "toolkit_tested_revision": "8378dcce34241814fb5ca28473b51266916cc2d9"
 }

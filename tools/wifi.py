@@ -234,14 +234,21 @@ def main():
     parser.add_argument('--session', type=Path, required=True)
     parser.add_argument('--timeout', type=float, default=360,
                         help='seconds to wait for the response; raw backups need more')
-    parser.add_argument('json_request')
-    args = parser.parse_args()
+    parser.add_argument('json_request', nargs='?', help='inline JSON request (exclusive with --request-file)')
+    parser.add_argument('--request-file', type=Path, help='read one UTF-8 JSON request file')
+    args = parser.parse_intermixed_args()
     # Existing client owns queue serialization, response polling and timeouts.
     import zve10_terminal_client as client
+    if not hasattr(client, 'load_request'):
+        raise SystemExit('Update zv-e10-toolkit main for JSON request-file support; see docs/install.md')
+    try:
+        payload = client.load_request(args.json_request, args.request_file)
+    except (OSError, ValueError) as exc:
+        parser.error('Invalid request: ' + str(exc))
     folder = args.session.resolve()
     if client.read_state(folder).get('state') != 'ready':
         raise SystemExit('Session is not ready')
-    answer = client.submit(folder, json.loads(args.json_request), timeout=args.timeout)
+    answer = client.submit(folder, payload, timeout=args.timeout)
     print(json.dumps(answer, indent=2))
     if 'error' in answer or 'refused' in answer:
         raise SystemExit(1)

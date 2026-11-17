@@ -1,5 +1,7 @@
 """Offline only: safety boundaries, transaction ordering, failed USB responses."""
 import json
+import contextlib
+import io
 import os
 import struct
 import tempfile
@@ -9,6 +11,70 @@ from unittest.mock import Mock, patch
 import wifi
 import wbi
 import jiritsu_upload
+import sys
+import zve10_terminal_client as client
+
+
+class RequestFileTests(unittest.TestCase):
+    @unittest.skipUnless(os.name == 'nt', 'requires Windows PowerShell')
+    def test_powershell_wbi_request_file(self):
+        import base64
+        import subprocess
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            runner = root / 'offline runner.py'
+            runner.write_text(
+                'import sys\nsys.path.insert(0, ' + repr(str(Path(wifi.__file__).parent)) + ')\n'
+                'import wifi\nimport zve10_terminal_client as c\n'
+                'c.read_state = lambda _: {"state": "ready"}\n'
+                'c.submit = lambda session, payload, **kw: payload\nwifi.main()\n', encoding='utf-8')
+            payload = {'action': 'wbi-drop', 'confirm_emmc_write': 'INVALIDATE WBI test hash',
+                       'sony_tool': 'private/Sony 工具/a "b".elf', 'recovery_ready': True}
+            request = root / '请求 with spaces.json'
+            def quote(value):
+                return "'" + str(value).replace("'", "''") + "'"
+            # Use PowerShell itself to generate the BOM-prefixed UTF-8 file.
+            command = "@{ action='wbi-drop'; confirm_emmc_write='INVALIDATE WBI test hash'; " \
+                      "sony_tool='private/Sony 工具/a \"b\".elf'; recovery_ready=$true } | " \
+                      'ConvertTo-Json -Depth 8 | Set-Content -LiteralPath %s -Encoding UTF8\n' % quote(request)
+            command += '& %s -B %s request --session %s --request-file %s' % tuple(
+                map(quote, (sys.executable, runner, root, request)))
+            result = subprocess.run(['powershell.exe', '-NoProfile', '-NonInteractive', '-EncodedCommand',
+                                     base64.b64encode(command.encode('utf-16-le')).decode()],
+                                    capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout), payload)
+
+    def test_file_and_inline_use_existing_submit(self):
+        payload = {'action': 'wbi-drop', 'confirm_emmc_write': 'INVALIDATE WBI test hash',
+                   'sony_tool': 'private/Sony 工具/a "b".elf', 'recovery_ready': True}
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / '请求 with spaces.json'
+            for encoding in ('utf-8', 'utf-8-sig'):
+                path.write_text(json.dumps(payload, ensure_ascii=False), encoding=encoding)
+                for arguments in (['--request-file', str(path)], [json.dumps(payload)]):
+                    with patch.object(sys, 'argv', ['wifi', 'request', '--session', folder] + arguments), \
+                         patch.object(client, 'read_state', return_value={'state': 'ready'}), \
+                         patch.object(client, 'submit', return_value={}) as submit, \
+                         contextlib.redirect_stdout(io.StringIO()):
+                        wifi.main()
+                    self.assertEqual(submit.call_args.args[1], payload)
+
+    def test_invalid_file_or_conflicting_input_never_submits(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'bad.json'
+            for text in ('{', '[]', 'null', '"text"', ''):
+                path.write_text(text, encoding='utf-8')
+                for arguments in (['--request-file', str(path)],
+                                  ['--request-file', str(path), '{}'],
+                                  ['--request-file', str(path) + '.missing'], []):
+                    with patch.object(sys, 'argv', ['wifi', 'request', '--session', folder] + arguments), \
+                         patch.object(client, 'read_state') as state, \
+                         patch.object(client, 'submit') as submit, contextlib.redirect_stderr(io.StringIO()):
+                        with self.assertRaises(SystemExit):
+                            wifi.main()
+                        state.assert_not_called()
+                        submit.assert_not_called()
 
 
 class UploadTests(unittest.TestCase):

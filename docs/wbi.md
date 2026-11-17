@@ -35,6 +35,14 @@ The host generates the exact five-entry partition configuration used in the succ
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-status"}'
 ```
 
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'wbi-status' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/wbi-01 --request-file $requestFile
+```
+
 It saves one 60 MiB copy in the private session (the result JSON keeps the hash); delete the copy after review if space is needed.
 
 ## 2. Prepare and review two full backups
@@ -43,6 +51,14 @@ Follow [installation](install.md) to establish one persistent session in `privat
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-prepare","model":"ZV-E10","displayed_firmware":"2.03","sony_tool":"private/sony-wbi/ud_wbi_drop.elf"}'
+```
+
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'wbi-prepare'; model = 'ZV-E10'; displayed_firmware = '2.03'; sony_tool = 'private/sony-wbi/ud_wbi_drop.elf' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/wbi-01 --request-file $requestFile
 ```
 
 `wbi-prepare` performs no camera write. Use your actual displayed version in the request (the example is 2.03). It automatically checks two exact `/version.txt` reads and the matching version-specific ZV-E10 `libObj.so` fingerprint, the patched complete `CautionConfig.so` hash, and all three properties. Model identification uses these known system fingerprints plus the owner's model confirmation; it does not query a separate USB product-name API. The accepted pairs are 2.02 / `30110_05.2025031501` and 2.03 / `30110_06.2026060501`; each has a distinct pinned `libObj.so`. 2.03 requires the Jiritsu backend. Unknown versions stop.
@@ -59,6 +75,14 @@ Replace `PREPARED_TOKEN` and `BACKUP_SHA256` with the exact returned values. Use
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/wbi-01 '{"action":"wbi-drop","prepared":"PREPARED_TOKEN","sony_tool":"private/sony-wbi/ud_wbi_drop.elf","confirm_emmc_write":"INVALIDATE WBI BACKUP_SHA256","recovery_ready":true}'
+```
+
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'wbi-drop'; prepared = 'PREPARED_TOKEN'; sony_tool = 'private/sony-wbi/ud_wbi_drop.elf'; confirm_emmc_write = 'INVALIDATE WBI BACKUP_SHA256'; recovery_ready = $true } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/wbi-01 --request-file $requestFile
 ```
 
 The action rechecks firmware, fingerprints, properties, device identity, saved backups and a fresh whole-partition read against preparation. The token is consumed before any possible execution, preventing blind retries. Sony's exact utility and the generated configuration are uploaded through Jiritsu SET_FILE2 and **fully read back with GET_FILE for host byte comparison** before execution. Camera BusyBox hashes/hex dumps are not trusted.

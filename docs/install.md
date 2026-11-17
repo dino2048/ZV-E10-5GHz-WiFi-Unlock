@@ -90,12 +90,28 @@ $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
 & $wifiPython -B .\tools\wifi.py serve --backend jiritsu --firmware 2.03 --owner-authorized-exec --idle-timeout 3600 --session-dir private\win-inspect-01
 ```
 
-In another PowerShell terminal, set the same environment and interpreter and wait for `private\win-inspect-01\state.json` to say `ready`. Windows PowerShell 5 strips plain double quotes in native-program arguments, so preserve the backslashes: run `$request = '{\"action\":\"inspect\"}'` and `& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 $request`. Keep this session open through inspection and backup. Do not run `patch`, `backup-write`, or `wbi-drop` in this read-only session.
+In another PowerShell terminal, set the same environment and interpreter and wait for `private\win-inspect-01\state.json` to say `ready`. Use a JSON request file on Windows; inline JSON can lose quotes or split at spaces in PowerShell 5.1. This applies to every action, including paths and WBI confirmation text:
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'inspect' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --request-file $requestFile
+```
+
+Keep this session open through inspection and backup. Do not run `patch`, `backup-write`, or `wbi-drop` in this read-only session.
 
 For macOS/Linux, the shell examples use `private/install-01`; Windows uses the PowerShell requests and `private/win-inspect-01` above. Wait for the selected session's `state: ready` and keep the same environment in both terminals. The macOS/Linux inspection request is:
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"inspect"}'
+```
+
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'inspect' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-inspect-01 --request-file $requestFile
 ```
 
 This exports the full current library and both Backup files to unique names inside the private session directory, reports the three one-byte values and mounts. Record the snapshot token. Add `--timeout 3600` to any request that can run longer than the default 360 seconds, such as the server's `raw-backup` action. FileControl reads and the terminal share this same authenticated service connection. Authentication itself may update Sony service bookkeeping; read-only inspection is not a promise of zero internal bookkeeping.
@@ -115,8 +131,9 @@ Preserve the returned original property values in a private installation note, a
 After the read-only server reaches `ready`, keep that same session open and request **two independent reads** of the user area and B0/B1 before starting a write session. Allow at least 5 GiB free host disk space. In the second PowerShell terminal:
 
 ```powershell
-$request = '{\"action\":\"raw-backup\",\"passes\":2,\"chunk_kib\":4096}'
-& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --timeout 7200 $request
+$requestFile = 'private/request.json'
+@{ action = 'raw-backup'; passes = 2; chunk_kib = 4096 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --timeout 7200 --request-file $requestFile
 ```
 
 Keep both passes, `manifest.json` and `SHA256SUMS` privately. Independently hash each saved file and compare it with the manifest, then review `comparisons` for all three regions. `completed: true` means the reads finished; it does not guarantee that both user-area passes are identical. A running camera may change writable data between passes. If they differ, preserve the differing-chunk list and have the Agent investigate before proceeding.
@@ -130,7 +147,15 @@ The Wi-Fi action guards `/usr` mount identity and full library hash, uploads the
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"patch"}'
 ```
 
-On Windows, finish and verify the backup first. Close the read-only session with `$request = '{\"action\":\"close\"}'` and the same request command. Wait for `closed`, `service_returned=true` and `loader_files_removed=true`, then switch OFF, wait for the access lamp, unplug USB and remove the battery for about 30 seconds. Refit the battery, power on and reconnect. After the owner confirms the write scope, start a new write session:
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'patch' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+```
+
+On Windows, finish and verify the backup first. Close the read-only session by writing `@{ action = 'close' } | ConvertTo-Json | Set-Content -LiteralPath $requestFile -Encoding UTF8` and submitting the same request file. Wait for `closed`, `service_returned=true` and `loader_files_removed=true`, then switch OFF, wait for the access lamp, unplug USB and remove the battery for about 30 seconds. Refit the battery, power on and reconnect. After the owner confirms the write scope, start a new write session:
 
 ```powershell
 & $wifiPython -B .\tools\wifi.py serve --backend jiritsu --firmware 2.03 --owner-authorized-exec --owner-authorized-write --idle-timeout 3600 --session-dir private\win-install-01
@@ -139,8 +164,9 @@ On Windows, finish and verify the backup first. Close the read-only session with
 Wait for this session to become `ready`. Run `inspect` in it again and compare the library hash and original properties with the saved preflight results. Only then send the patch request, keeping the backslash escapes:
 
 ```powershell
-$request = '{\"action\":\"patch\"}'
-& $wifiPython -B .\tools\wifi.py request --session private\win-install-01 $request
+$requestFile = 'private/request.json'
+@{ action = 'patch' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private\win-install-01 --request-file $requestFile
 ```
 
 The `backup-write` requests below use the same form. The Windows round trip of this phase is validated; a first-time installation on Windows has not been tested.
@@ -159,6 +185,18 @@ Then write the Backup properties individually. **These examples assume the inspe
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"backup-write","id":"0x00A5000C","expected":"09","value":"16"}'
 ```
 
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'backup-write'; id = '0x01071C54'; expected = '00'; value = '01' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+@{ action = 'backup-write'; id = '0x00A5000B'; expected = '09'; value = '02' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+@{ action = 'backup-write'; id = '0x00A5000C'; expected = '09'; value = '16' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+```
+
 Review `match: true` after each command. The Wi-Fi action validates the three permitted keys and values, then delegates to toolkit's generic Backup action, which saves the original before writing, invokes Sony's save call, and immediately rereads it. Already-correct properties can be skipped. It does not edit the BK4 files directly. Partial completion is possible: retain each result and restore only what changed if needed.
 
 An error in a structured Wi-Fi/Backup action stops the existing server. Do not blindly resend, reboot, or continue. Check preserved snapshots, state, and the recovery guide. A failed response after writing may still mean the camera changed. A remount failure requires resolving the current mount state before cold boot.
@@ -171,6 +209,14 @@ Run `inspect` again. Require the patched full hash, the menu property `01` and t
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"close"}'
 ```
 
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'close' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+```
+
 Wait for server exit and require `state: closed`, `service_returned: true`, and `loader_files_removed: true` for Jiritsu or `terminal_closed: true` for the legacy terminal in state.json. The close response alone precedes terminal teardown and is not sufficient.
 
 Switch OFF, wait for the access lamp to go out, unplug USB and remove the battery for about 30 seconds. Refit it and start a new **read-only** session in `private/verify-01`, wait for `ready`, then inspect. Ask the owner to check Network → Wi-Fi Settings → Frequency Band and select 2.4/5 GHz while the session remains ready/open.
@@ -181,6 +227,14 @@ Run the read-only check in the new ready session:
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"boot-check"}'
+```
+
+Windows PowerShell (the same placeholders and authorization requirements apply):
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'boot-check' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/verify-01 --request-file $requestFile
 ```
 
 Require `page1.type: TypeNB`, `page1.count: 5`, the owner's confirmation that the native band page opens. `boot-check` reads the global Page1 object; the camera menu remains the final UI check. If the result is TypeRK/four items while the patch and properties match, follow [WBI recovery](wbi.md) under Agent supervision. WBI invalidation is a separate confirmed eMMC operation; it is never automatically chained to the patch.

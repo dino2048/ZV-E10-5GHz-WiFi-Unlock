@@ -90,12 +90,28 @@ $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
 & $wifiPython -B .\tools\wifi.py serve --backend jiritsu --firmware 2.03 --owner-authorized-exec --idle-timeout 3600 --session-dir private\win-inspect-01
 ```
 
-另开 PowerShell 终端设置相同的 `ZVE10_TOOLKIT` 与 `$wifiPython`，等待 `private\win-inspect-01\state.json` 为 `ready`，然后请求 `inspect`。Windows PowerShell 5 向原生程序传 JSON 时会剥掉普通双引号，须保留反斜杠转义：`$request = '{\"action\":\"inspect\"}'`；`& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 $request`。检查和备份期间保持这一个会话，不得在只读会话中执行 `patch`、`backup-write` 或 `wbi-drop`。
+另开 PowerShell 终端设置相同的 `ZVE10_TOOLKIT` 与 `$wifiPython`，等待 `private\win-inspect-01\state.json` 为 `ready`，然后请求 `inspect`。Windows 统一使用 JSON 请求文件，避免 PowerShell 5.1 拆开空格或剥掉引号：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'inspect' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --request-file $requestFile
+```
+
+检查和备份期间保持这一个会话，不得在只读会话中执行 `patch`、`backup-write` 或 `wbi-drop`。
 
 macOS/Linux 的 shell 示例使用 `private/install-01`；Windows 使用上面的 PowerShell 请求和 `private/win-inspect-01`。等待所选会话的 `state` 为 `ready`，两个终端保持相同环境。macOS/Linux 的检查命令为：
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"inspect"}'
+```
+
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'inspect' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-inspect-01 --request-file $requestFile
 ```
 
 `inspect` 会将完整目标库、两份 Backup 文件保存到私密会话目录，使用独立文件名避免覆盖，并返回三个属性值、挂载信息及快照编号。任何可能超过默认 360 秒的请求（例如服务端的 `raw-backup`）都要加 `--timeout 3600`。文件读取和终端操作共用同一个认证连接。认证本身可能更新 Sony 服务记账文件。
@@ -115,8 +131,9 @@ macOS/Linux 的 shell 示例使用 `private/install-01`；Windows 使用上面�
 只读服务端进入 `ready` 后，保持同一会话，在新建写入会话前先对用户区和 B0/B1 **各独立读取两遍**。电脑至少预留 5 GiB 可用空间。在第二个 PowerShell 终端执行：
 
 ```powershell
-$request = '{\"action\":\"raw-backup\",\"passes\":2,\"chunk_kib\":4096}'
-& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --timeout 7200 $request
+$requestFile = 'private/request.json'
+@{ action = 'raw-backup'; passes = 2; chunk_kib = 4096 } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private\win-inspect-01 --timeout 7200 --request-file $requestFile
 ```
 
 私密保留两遍文件、`manifest.json` 和 `SHA256SUMS`。电脑独立重算每份保存文件的哈希并与清单比较，再审阅三个区域的 `comparisons`。`completed: true` 只代表读取完成，不保证用户区两遍完全相同；相机运行中可写数据可能变化。有差异时保留差异块清单，由 Agent 查清后再继续。
@@ -130,7 +147,15 @@ Wi-Fi 操作先检查 `/usr` 的挂载来源及整文件哈希，再通过一次
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"patch"}'
 ```
 
-Windows 先完成并校验备份。将 `$request` 设为 `'{\"action\":\"close\"}'`，用同一请求命令关闭只读会话；等 `closed`、`service_returned=true`、`loader_files_removed=true` 后，关机、等存取灯熄灭、拔 USB、取电池约 30 秒，再装电池开机并重新连接。机主确认写入范围后，新建写入会话：
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'patch' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+```
+
+Windows 先完成并校验备份。用 `@{ action = 'close' } | ConvertTo-Json | Set-Content -LiteralPath $requestFile -Encoding UTF8` 保存关闭请求，再提交同一请求文件关闭只读会话；等 `closed`、`service_returned=true`、`loader_files_removed=true` 后，关机、等存取灯熄灭、拔 USB、取电池约 30 秒，再装电池开机并重新连接。机主确认写入范围后，新建写入会话：
 
 ```powershell
 & $wifiPython -B .\tools\wifi.py serve --backend jiritsu --firmware 2.03 --owner-authorized-exec --owner-authorized-write --idle-timeout 3600 --session-dir private\win-install-01
@@ -139,8 +164,9 @@ Windows 先完成并校验备份。将 `$request` 设为 `'{\"action\":\"close\"
 等待该会话为 `ready`，先在其中重新执行 `inspect`，与预检保存的库哈希和属性原值比较，再发送补丁请求（保留反斜杠转义）：
 
 ```powershell
-$request = '{\"action\":\"patch\"}'
-& $wifiPython -B .\tools\wifi.py request --session private\win-install-01 $request
+$requestFile = 'private/request.json'
+@{ action = 'patch' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private\win-install-01 --request-file $requestFile
 ```
 
 下面的 `backup-write` 请求同样处理。该步骤在 Windows 上做过往返验证，但**没有做原厂相机的首次安装验证**。
@@ -159,6 +185,18 @@ $request = '{\"action\":\"patch\"}'
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"backup-write","id":"0x00A5000C","expected":"09","value":"16"}'
 ```
 
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'backup-write'; id = '0x01071C54'; expected = '00'; value = '01' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+@{ action = 'backup-write'; id = '0x00A5000B'; expected = '09'; value = '02' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+@{ action = 'backup-write'; id = '0x00A5000C'; expected = '09'; value = '16' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+```
+
 每条命令后检查 `match: true`。Wi-Fi 操作限制可修改的三个属性和值，再调用 toolkit 通用 Backup 接口：先保存原值，写入后调用 Sony 保存方法并立即读回。已经正确的属性可以跳过，不直接编辑 BK4 文件。若仅部分步骤成功，应保留每一步结果，按实际变化恢复。
 
 结构化 Wi-Fi 或 Backup 操作报错会结束服务端。不要直接重发、重启或继续写入；先检查快照、状态和恢复说明。响应丢失不代表相机没有变化。恢复只读挂载失败时，必须先处理挂载状态，再考虑冷启动。
@@ -171,6 +209,14 @@ $request = '{\"action\":\"patch\"}'
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/install-01 '{"action":"close"}'
 ```
 
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'close' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/win-install-01 --request-file $requestFile
+```
+
 等待服务端退出，确认 state.json 中 `state: closed`、`service_returned: true`；Jiritsu 检查 `loader_files_removed: true`，旧终端检查 `terminal_closed: true`。收到 close 响应时，终端清理可能尚未结束，不能只看这一条响应。
 
 相机 OFF，等待存取指示灯熄灭，拔掉 USB 并取下电池约 30 秒。重新装入后，在 `private/verify-01` 建立新的**只读**会话，等待 `ready` 再检查。保持会话打开，请机主进入“网络 → Wi-Fi 设置 → 频带”，检查 2.4/5 GHz 选择页。
@@ -181,6 +227,14 @@ $request = '{\"action\":\"patch\"}'
 
 ```sh
 "$WIFI_PYTHON" -B tools/wifi.py request --session private/verify-01 '{"action":"boot-check"}'
+```
+
+Windows PowerShell（占位值及授权要求与上文相同）：
+
+```powershell
+$requestFile = 'private/request.json'
+@{ action = 'boot-check' } | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $requestFile -Encoding UTF8
+& $wifiPython -B .\tools\wifi.py request --session private/verify-01 --request-file $requestFile
 ```
 
 要求返回 `page1.type: TypeNB`、`page1.count: 5`，并由机主确认原生频带页能打开。`boot-check` 读取全局 Page1 对象；最终仍以相机屏幕验证。若补丁及属性正确但返回 TypeRK/4，请在 Agent 协助下按[暖镜像恢复流程](wbi.zh-CN.md)处理。WBI 失效是单独确认的 eMMC 操作，不能自动接在补丁之后执行。
