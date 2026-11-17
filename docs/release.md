@@ -15,7 +15,7 @@
 
 See [validation](evidence.md) for system and platform coverage of menu unlocking, property/file changes, WBI handling and wireless functions. Windows 2.03 covers setup, service connection, backup, inspection and property/library changes; WBI writing awaits Windows hardware confirmation.
 
-The companion dependency is [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b), including Windows setup and service-reply support. Offline checks are listed in [offline-checks.json](offline-checks.json).
+Use the latest [zv-e10-toolkit `main`](https://github.com/dino2048/zv-e10-toolkit/tree/main), including Windows support and Jiritsu workspace initialization. Update before connecting, rerun the offline checks, and keep the checkout unchanged during a camera session. [offline-checks.json](offline-checks.json) records the exact toolkit revision used for validation; it is evidence, not an installation pin or a claim that future revisions have already been tested.
 
 ## Checks without a camera
 

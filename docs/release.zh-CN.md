@@ -15,7 +15,7 @@
 
 菜单解锁、属性及文件修改、WBI 处理、无线功能的系统与平台范围见[验证说明](evidence.zh-CN.md)。Windows 2.03 覆盖环境安装、服务连接、备份、检查和属性/库字节修改；WBI 写入尚待 Windows 实机确认。
 
-配套依赖固定为 [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b)，已包含 Windows 安装与服务响应支持。离线检查项目见 [offline-checks.json](offline-checks.json)。
+配套使用 [zv-e10-toolkit 最新 `main`](https://github.com/dino2048/zv-e10-toolkit/tree/main)，包含 Windows 支持及 Jiritsu 工作区初始化。连接前更新并重跑离线检查，相机会话期间保持代码不变。[offline-checks.json](offline-checks.json) 记录验证时实际使用的 toolkit 提交，仅供追溯，不限制安装版本，也不表示未来更新已经通过验证。
 
 ## 不连接相机的自检
 

@@ -6,6 +6,8 @@
 
 2.03 的所有服务端命令都要带 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。Jiritsu 会临时上传加载程序和脚本，结束后按本文清理并断电。先读 [AGENTS.md](../AGENTS.md) 和[恢复说明](recovery.zh-CN.md)。
 
+使用 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 最新的 `main`。其 Jiritsu 启动流程会先用相机自带 MOUNT 命令准备维修工作区，再检查旧载荷文件和上传。若初始化返回 `0x10000004`，应停止并保留错误；缺少目录以外的原因也可能导致挂载失败。社区报告者相机上的解决效果仍待确认。
+
 ## 1. 准备环境，暂不连接相机
 
 需要 Python 3.10+、Git 和 libusb。macOS 使用系统中的 libusb，Windows 按下节脚本准备环境与驱动；Linux 2.03 已有社区安装成功报告，具体范围见[验证说明](evidence.zh-CN.md#社区-linux-203-报告)。
@@ -15,8 +17,7 @@
 安装 Python 3.10+、Git，并确保 `py` 与 `git` 在 PATH 中。将两个配套仓库放在同一个父目录（`ZV-E10-5GHz-WiFi-Unlock` 和 `zv-e10-toolkit`），在 Wi-Fi 项目根目录运行；也可用 `-Toolkit` 指定 toolkit 的位置：
 
 ```powershell
-git clone https://github.com/dino2048/zv-e10-toolkit.git ..\zv-e10-toolkit
-git -C ..\zv-e10-toolkit checkout --detach a647c551f51f47ee28b5129b0f3c7f84fa3ad80b
+git clone --branch main https://github.com/dino2048/zv-e10-toolkit.git ..\zv-e10-toolkit
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup-windows.ps1
 $env:ZVE10_TOOLKIT = (Resolve-Path ..\zv-e10-toolkit).Path
 $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
@@ -24,7 +25,7 @@ $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
 & $wifiPython -B -m unittest discover -s tools -p test_safety.py -v
 ```
 
-已有 toolkit 目录时不要重复克隆或覆盖改动；先核对现有目录，再由 Agent 切换到上述固定提交。
+已有 toolkit 目录时不要重复克隆或覆盖改动。先保留并核对本地修改，在建立相机会话之前，对干净工作区依次执行 `git -C ..\zv-e10-toolkit switch main` 和 `git -C ..\zv-e10-toolkit pull --ff-only origin main`。任一步失败都先解决，不丢弃本地修改；更新后重跑环境准备和离线检查。相机会话期间保持代码不变。
 
 准备脚本调用配套 toolkit 自己的 `linux/scripts/setup-windows.ps1`，由 toolkit 建立虚拟环境并固定 Sony-PMCA-RE 提交；不连接相机，也不修改 toolkit 源码。Windows 的 `chmod` 不控制目录访问权限，toolkit 用当前 Windows 用户的 SID 设置会话目录 ACL。私密会话仍应保存在本机可信磁盘。
 
@@ -34,19 +35,26 @@ USB 服务模式还需要检查驱动：Sony-PMCA-RE 的 Windows 流程要求分
 
 Windows 2.03 的只读会话已验证（见证据记录）。对新电脑、新驱动或新相机，仍应先只读建会话、`inspect`、正常 `close`，核对 `loader_files_removed` 和 `service_returned` 后再考虑安装。
 
-各主机统一使用 [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b)，提供通用 Backup 操作、持久会话及 Windows 传输支持。macOS/Linux 克隆后切换到同一固定提交：
+各主机使用 toolkit 最新 `main`，提供通用 Backup 操作、持久会话、Windows 传输支持及维修工作区初始化。macOS/Linux 按下面准备：
 
 ```sh
 mkdir -p vendor
-git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
+git clone --branch main https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach a647c551f51f47ee28b5129b0f3c7f84fa3ad80b
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
 ```
 
-已有更新版 toolkit 时，将 `ZVE10_TOOLKIT` 指向该目录，`WIFI_PYTHON` 指向其解释器即可，不必复制代码或重复建立环境。用户指定了解释器时优先使用。toolkit 的安装脚本负责依赖及固定版本 Sony-PMCA-RE；本项目不另存一套公共工具、依赖清单、服务端或客户端。Windows、macOS 和 Linux 使用同一固定 toolkit 提交。
+已有 toolkit 时，将 `ZVE10_TOOLKIT` 指向该目录，`WIFI_PYTHON` 指向其解释器，不必复制代码或重复建立环境。核对本地修改后，在连接前更新干净工作区：
+
+```sh
+git -C "$ZVE10_TOOLKIT" switch main
+git -C "$ZVE10_TOOLKIT" pull --ff-only origin main
+PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
+```
+
+切换或更新失败就停止，保留本地修改并先解决问题。更新后运行[离线检查](release.zh-CN.md#不连接相机的自检)，相机会话期间保持代码不变。用户指定了解释器时优先使用。toolkit 的安装脚本负责依赖及固定版本 Sony-PMCA-RE；本项目不另存一套公共工具、依赖清单、服务端或客户端。
 
 仓库附带两个小型 ARM Linux 程序及汇编源码。`patch.arm` 就是历史实机成功使用的文件，MD5 为 `8a1bd57091f544a758300b7151d94f05`。`restore.arm` 使用相同源码反转原值和目标值构建，已用于 Windows 恢复/补丁往返。如需重建，使用支持 ARM 目标的 clang 和 GNU `arm-none-eabi-ld`：
 

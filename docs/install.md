@@ -6,6 +6,8 @@ Follow this guide with an AI Agent, using the companion toolkit for connection, 
 
 Every server command for system 2.03 needs `--backend jiritsu --firmware 2.03 --owner-authorized-exec`. Jiritsu temporarily uploads a loader and script; finish with the documented cleanup and power removal. Read [AGENTS.md](../AGENTS.md) and [recovery](recovery.md) first.
 
+Use the latest `main` of [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit). Its Jiritsu startup prepares the service workspace with the camera's own MOUNT command before checking old loader files or uploading. If initialization fails with `0x10000004`, stop and preserve the error; it can have causes other than a missing directory. Resolution on the community camera reporting this error remains unconfirmed.
+
 ## 1. Prepare without connecting
 
 Use Python 3.10+, Git and libusb. On macOS use the installed libusb; on Windows follow the setup and driver steps below. Linux 2.03 has a community installation report; see [validation](evidence.md#community-linux-203-report) for its scope.
@@ -15,8 +17,7 @@ Use Python 3.10+, Git and libusb. On macOS use the installed libusb; on Windows 
 Install Python 3.10+ and Git, with `py` and `git` on PATH. Place the companion `ZV-E10-5GHz-WiFi-Unlock` and `zv-e10-toolkit` checkouts beside each other, then run from the Wi-Fi repository root. Pass `-Toolkit` to use another toolkit path:
 
 ```powershell
-git clone https://github.com/dino2048/zv-e10-toolkit.git ..\zv-e10-toolkit
-git -C ..\zv-e10-toolkit checkout --detach a647c551f51f47ee28b5129b0f3c7f84fa3ad80b
+git clone --branch main https://github.com/dino2048/zv-e10-toolkit.git ..\zv-e10-toolkit
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tools\setup-windows.ps1
 $env:ZVE10_TOOLKIT = (Resolve-Path ..\zv-e10-toolkit).Path
 $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
@@ -24,7 +25,7 @@ $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
 & $wifiPython -B -m unittest discover -s tools -p test_safety.py -v
 ```
 
-If the toolkit directory already exists, preserve its changes and have the Agent review it before selecting the pinned revision; do not clone over it.
+If the toolkit directory already exists, preserve and review local changes; do not clone over it. Before opening a camera session, update a clean checkout with `git -C ..\zv-e10-toolkit switch main` followed by `git -C ..\zv-e10-toolkit pull --ff-only origin main`. If either command fails, resolve it before continuing; do not discard local changes. Rerun setup and the offline checks after updating. Keep the checkout unchanged throughout a camera session.
 
 The script calls the companion toolkit's own `linux/scripts/setup-windows.ps1`, which prepares its virtual environment and pins Sony-PMCA-RE. It neither connects to the camera nor patches toolkit source. On Windows, `chmod` does not restrict directory access, so the toolkit sets the session directory ACL to the current user's SID. Keep private sessions on a trusted local disk.
 
@@ -34,19 +35,26 @@ Sony-PMCA-RE's Windows service-mode instructions require a `libusb-win32` driver
 
 A Windows 2.03 read-only session has been validated (see the evidence record). For a new host, driver setup or camera, still start with a read-only session, run `inspect`, close normally and check `loader_files_removed` and `service_returned` before any installation.
 
-All hosts use [zv-e10-toolkit `a647c55`](https://github.com/dino2048/zv-e10-toolkit/commit/a647c551f51f47ee28b5129b0f3c7f84fa3ad80b). It provides the shared Backup actions, persistent session and Windows transport. For macOS/Linux, clone and check out the same pinned commit:
+All hosts use the latest toolkit `main`, which provides shared Backup actions, the persistent session, Windows transport and service-workspace initialization. On macOS/Linux:
 
 ```sh
 mkdir -p vendor
-git clone https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
+git clone --branch main https://github.com/dino2048/zv-e10-toolkit.git vendor/zv-e10-toolkit
 export ZVE10_TOOLKIT="$PWD/vendor/zv-e10-toolkit"
-git -C "$ZVE10_TOOLKIT" checkout --detach a647c551f51f47ee28b5129b0f3c7f84fa3ad80b
 PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
 export WIFI_PYTHON="$ZVE10_TOOLKIT/linux/.venv/bin/python"
 "$WIFI_PYTHON" -B tools/wifi.py --help
 ```
 
-If you already have the updated toolkit, set `ZVE10_TOOLKIT` to that checkout and `WIFI_PYTHON` to its interpreter; do not copy its code or create another environment unnecessarily. Use the owner's chosen interpreter when specified. Toolkit setup installs dependencies and its pinned Sony-PMCA-RE checkout. This repository does not carry duplicate common helpers, dependency lists, service servers or clients. Use the same pinned toolkit revision on Windows, macOS and Linux.
+If you already have the toolkit, set `ZVE10_TOOLKIT` to that checkout and `WIFI_PYTHON` to its interpreter; do not copy its code or create another environment unnecessarily. Review local changes, then update a clean checkout before connecting:
+
+```sh
+git -C "$ZVE10_TOOLKIT" switch main
+git -C "$ZVE10_TOOLKIT" pull --ff-only origin main
+PYTHON=python3 sh "$ZVE10_TOOLKIT/linux/scripts/setup.sh"
+```
+
+Stop if switching or updating fails; preserve local changes and resolve the problem first. Run the [offline checks](release.md#checks-without-a-camera) after updating, and keep the checkout unchanged throughout a camera session. Use the owner's chosen interpreter when specified. Toolkit setup installs dependencies and its pinned Sony-PMCA-RE checkout. This repository does not carry duplicate common helpers, dependency lists, service servers or clients.
 
 The two tiny ARM Linux helpers are supplied with assembly source. `patch.arm` is the exact camera-tested executable (MD5 `8a1bd57091f544a758300b7151d94f05`). `restore.arm` is built from the same source with expected/replacement bytes reversed and was exercised in the Windows restore/patch round trip. To rebuild, use clang with an ARM target and GNU `arm-none-eabi-ld`:
 
