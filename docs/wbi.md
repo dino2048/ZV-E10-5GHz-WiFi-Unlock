@@ -1,8 +1,10 @@
-# Warm Boot Image recovery
+# Warm Boot Image checks and handling
 
 **English** | [简体中文](wbi.zh-CN.md)
 
-Use only on first-generation **ZV-E10 known systems 2.02 and 2.03**, after the one-byte patch, enabled menu property and selected B/C values are verified, when Page1 is still TypeRK/four items and the native band menu is absent. Do not repeat the patch/property writes. An old WBI can restore the old page; battery removal for 30 seconds does not guarantee a true cold boot.
+This is a required installation step for first-generation **ZV-E10 known systems 2.02 and 2.03**: after modifying the menu library and settings, check the WBI and complete the applicable handling, then restart and verify. An old Warm Boot Image (WBI) may restore the previous menu; battery removal for 30 seconds does not guarantee a true cold boot.
+
+Verify the one-byte patch, enabled menu property and selected B/C values, then run read-only `wbi-status` and `boot-check`. If Page1 is still TypeRK/four items and a valid old WBI remains, follow the backup and invalidation procedure below; do not repeat the patch/property writes. Never rewrite an already-invalid WBI. Cameras already processed with a working menu after restart do not need WBI invalidation repeated. The checks are required; actual invalidation still requires separate authorization.
 
 Both versions have validated the same WBI procedure: two complete backups, the Sony utility and full after-read comparison confirming only the first 512 bytes zeroed, followed by a working native band menu after restart. See [firmware differences and validation results](evidence.md).
 

@@ -201,7 +201,15 @@ Review `match: true` after each command. The Wi-Fi action validates the three pe
 
 An error in a structured Wi-Fi/Backup action stops the existing server. Do not blindly resend, reboot, or continue. Check preserved snapshots, state, and the recovery guide. A failed response after writing may still mean the camera changed. A remount failure requires resolving the current mount state before cold boot.
 
-## 5. Verify and close
+## 5. Warm Boot Image (WBI) checks and handling
+
+After modifying the menu library and settings, complete the required [WBI checks and handling](wbi.md) before final verification. In the current ready session, verify the patch and properties, then run read-only `wbi-status` and `boot-check`; use that page's requests with your current session path. If the old four-item menu remains and a valid old WBI exists, complete the double backup, obtain separate eMMC-write authorization, invalidate the old image and verify the full readback. If session permissions need changing, close normally and reconnect as documented.
+
+Do not rewrite an already-invalid WBI or repeat invalidation on a processed camera whose menu works after restart. File and property changes alone do not complete installation; do not skip the WBI checks.
+
+After full write readback, return to step 6 to close the current session and restart for verification. If you have already completed restart verification and cleanup using the WBI page, do not resend commands to its closed session.
+
+## 6. Restart, verify and close
 
 Run `inspect` again. Require the patched full hash, the menu property `01` and the selected B/C values, and `/usr` mounted read-only. Preserve before/after files privately. Then:
 
@@ -221,7 +229,7 @@ Wait for server exit and require `state: closed`, `service_returned: true`, and 
 
 Switch OFF, wait for the access lamp to go out, unplug USB and remove the battery for about 30 seconds. Refit it and start a new **read-only** session in `private/verify-01`, wait for `ready`, then inspect. Ask the owner to check Network → Wi-Fi Settings → Frequency Band and select 2.4/5 GHz while the session remains ready/open.
 
-**Warm boot check:** Battery removal for about 30 seconds may still resume a saved Warm Boot Image with an old four-item Wi-Fi page. In the verification session, inspect the boot log and confirm that the running Page1 has five TypeNB items. If it is still TypeRK/four items or the band menu is missing, stop acceptance and preserve the logs and snapshot. Do not repeat the same byte patch or Backup writes. On the tested camera, a separately backed-up, verified Sony updater operation invalidated only the first 512 bytes of the 60 MiB `nflasha5` warm image; the next boot had no `WARMBOOT` line (the kernel's `PM: Low-level resume` and `Waking up from system sleep` lines also appear on cold boots) and restored the five-item native page. Use the separate guarded `wbi-prepare` / `wbi-drop` actions in [WBI recovery](wbi.md), with full double backup, explicit eMMC-write consent and readback. Sony's binary must be extracted privately from the owner's official update package; it is not distributed here.
+**Verification after restart:** Require a running TypeNB/five-item Page1 and the owner's confirmation that the band menu opens. If TypeRK/four items or the missing menu persist, installation is incomplete: retain logs and snapshots and revisit [WBI checks and handling](wbi.md). Do not repeat patch/property writes or treat battery removal as proof of a cold boot. Only the firmware's `WARMBOOT` line confirms warm resume; the kernel's `PM: Low-level resume` and `Waking up from system sleep` lines may also appear on cold boots.
 
 Run the read-only check in the new ready session:
 
@@ -237,7 +245,7 @@ $requestFile = 'private/request.json'
 & $wifiPython -B .\tools\wifi.py request --session private/verify-01 --request-file $requestFile
 ```
 
-Require `page1.type: TypeNB`, `page1.count: 5`, the owner's confirmation that the native band page opens. `boot-check` reads the global Page1 object; the camera menu remains the final UI check. If the result is TypeRK/four items while the patch and properties match, follow [WBI recovery](wbi.md) under Agent supervision. WBI invalidation is a separate confirmed eMMC operation; it is never automatically chained to the patch.
+Require `page1.type: TypeNB`, `page1.count: 5`, the owner's confirmation that the native band page opens. `boot-check` reads the global Page1 object; the camera menu remains the final UI check. If the result is TypeRK/four items while the patch and properties match, follow [WBI checks and handling](wbi.md) under Agent supervision. WBI invalidation is a separate confirmed eMMC operation; it is never automatically chained to the patch.
 
 Use [verification steps](recovery.md) for optional functional checks and read-only active radio sampling. Close the verification session normally. Keep all private backups outside any public archive.
 

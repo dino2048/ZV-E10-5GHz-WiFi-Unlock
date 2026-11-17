@@ -201,7 +201,15 @@ $requestFile = 'private/request.json'
 
 结构化 Wi-Fi 或 Backup 操作报错会结束服务端。不要直接重发、重启或继续写入；先检查快照、状态和恢复说明。响应丢失不代表相机没有变化。恢复只读挂载失败时，必须先处理挂载状态，再考虑冷启动。
 
-## 5. 验收并结束会话
+## 5. 暖启动镜像（WBI）检查与处理
+
+修改菜单库和设置后，必须完成[WBI 检查与处理](wbi.zh-CN.md)，再进入最终验收。先在当前 `ready` 会话核对补丁及属性，执行只读 `wbi-status` 和 `boot-check`；具体请求见该页，沿用当前会话路径。若仍为旧四项菜单且有效旧 WBI 存在，应完成双备份、另行取得 eMMC 写入授权，再使旧镜像失效并完整回读。若需更换会话权限，先正常关闭并按文档重新连接。
+
+WBI 已失效时不重复写入；已处理且重启后菜单正常时不再次清除。不能把只完成文件及属性修改当成安装完成，也不能跳过 WBI 检查直接结束安装。
+
+完成写后完整回读后，返回第 6 步关闭当前会话、重启验收；如果已按 WBI 专题完成重启验收和清理，则不再向已关闭的旧会话重复发送命令。
+
+## 6. 重启验收并结束会话
 
 再次执行 `inspect`，确认完整补丁哈希、菜单属性 `01` 和已选择的 B/C 值 和 `/usr` 只读。私密保留修改前后文件，然后执行：
 
@@ -221,7 +229,7 @@ $requestFile = 'private/request.json'
 
 相机 OFF，等待存取指示灯熄灭，拔掉 USB 并取下电池约 30 秒。重新装入后，在 `private/verify-01` 建立新的**只读**会话，等待 `ready` 再检查。保持会话打开，请机主进入“网络 → Wi-Fi 设置 → 频带”，检查 2.4/5 GHz 选择页。
 
-**暖启动检查：**取电池约 30 秒仍可能从相机保存的 Warm Boot Image 恢复旧菜单状态。实机曾在补丁和三个属性都正确时，运行中的 Wi-Fi 页仍是 TypeRK 四项；内核日志有 `PM: Low-level resume complete`。在验收会话中查看启动日志，并核对当前 Page1 是否为 TypeNB 五项。若仍为 TypeRK 四项或缺少「频带」，停止验收，保留日志与快照；不要重刷同一字节、重复写 Backup 或把取电池当作已经完成真正冷启动。该机经先备份完整 60 MiB `nflasha5`、再用 Sony 原厂工具仅清除其首 512 B 暖镜像入口、断电重启后，日志无 `WARMBOOT` 行（内核的 `PM: Low-level resume` 和 `Waking up from system sleep` 在冷启动也会出现，不能单独作为暖启动证据），Page1 和屏幕均恢复五项。现已提供独立的 `wbi-prepare` / `wbi-drop` 保护流程，详见[暖镜像恢复](wbi.zh-CN.md)，必须完整双备份、另行确认 eMMC 写入并完整回读。Sony 原厂工具需从用户自备官方更新包私密提取，不随仓库分发。
+**重启验收：**核对当前 Page1 为 TypeNB 五项，并由机主确认频带菜单可进入。若仍为 TypeRK 四项或缺少「频带」，安装尚未完成：保留日志与快照，回到[WBI 检查与处理](wbi.zh-CN.md)复核，不要重复写补丁或属性，也不要把取电池当作冷启动证明。只有固件的 `WARMBOOT` 日志可确认暖恢复；内核的 `PM: Low-level resume` 和 `Waking up from system sleep` 在冷启动也可能出现。
 
 在新建且处于 `ready` 状态的只读会话中执行：
 
@@ -237,7 +245,7 @@ $requestFile = 'private/request.json'
 & $wifiPython -B .\tools\wifi.py request --session private/verify-01 --request-file $requestFile
 ```
 
-要求返回 `page1.type: TypeNB`、`page1.count: 5`，并由机主确认原生频带页能打开。`boot-check` 读取全局 Page1 对象；最终仍以相机屏幕验证。若补丁及属性正确但返回 TypeRK/4，请在 Agent 协助下按[暖镜像恢复流程](wbi.zh-CN.md)处理。WBI 失效是单独确认的 eMMC 操作，不能自动接在补丁之后执行。
+要求返回 `page1.type: TypeNB`、`page1.count: 5`，并由机主确认原生频带页能打开。`boot-check` 读取全局 Page1 对象；最终仍以相机屏幕验证。若补丁及属性正确但返回 TypeRK/4，请在 Agent 协助下按[WBI 检查与处理](wbi.zh-CN.md)处理。WBI 失效是单独确认的 eMMC 操作，不能自动接在补丁之后执行。
 
 需要功能检查或活动无线状态采样时，按[验收与恢复](recovery.zh-CN.md)执行。完成后正常关闭验收会话，所有个人备份均不得混入公开发布包。
 

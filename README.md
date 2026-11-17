@@ -27,7 +27,7 @@ The table shows the mainland China configuration. Connect the camera to a comput
 
 Supported firmware: **2.02 (`30110_05.2025031501`)** and **2.03 (`30110_06.2026060501`)**. System 2.03 uses the toolkit Jiritsu backend.
 
-If the old four-item Wi-Fi menu remains after modification, follow the [Warm Boot Image instructions](docs/wbi.md) to invalidate the old WBI, then restart and check the frequency-band menu. See [firmware differences and validation results](docs/evidence.md).
+**After modifying the menu library and settings, complete the [Warm Boot Image (WBI) checks and handling](docs/wbi.md), then restart and verify to finish installation.** Cameras already processed with a working menu do not need the operation repeated.
 
 ## Features
 

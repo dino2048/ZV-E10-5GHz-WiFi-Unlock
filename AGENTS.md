@@ -36,6 +36,8 @@ Never alter BCM4339 firmware, driver, NVRAM, radio calibration, unrelated Backup
 
 ## Checks, failure, and completion
 
+Treat WBI checks and applicable handling as a required installation step after the library/property changes and before final restart acceptance. Use wbi-status and boot-check to determine the action; do not report installation complete from file/property checks alone. An already-invalid WBI or an already-processed camera with a working menu must not be invalidated again. Keep separate owner consent for any WBI write.
+
 Follow the concrete commands in docs/install.md. Review each response before the next dependent write. No blind retries on timeout. Stop on mismatched values, short reads, helper failure, unexpected mounts, failed remount, or unknown version. A tool failure after a write does not imply nothing changed; reconnect only after reviewing state and preserved evidence.
 
 Do not power off a camera with a truncated/corrupt library. Never use `cp` over the loaded library or BusyBox `dd` as a writer: the demonstrated versions truncate or run out of space. File offsets are not block-device offsets. Recovery is described separately; do not flash an entire partition just to reverse one byte.

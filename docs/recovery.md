@@ -4,7 +4,7 @@
 
 ## Installation acceptance
 
-Separate these observations in the installation record:
+Complete the required [WBI checks and applicable handling](wbi.md) before final installation acceptance. Separate these observations in the installation record:
 
 1. Complete library hash/length and unique byte difference; three Backup values immediately reread.
 2. `/usr` is read-only, temporary helper removed, service closed normally.
@@ -91,7 +91,7 @@ Use the same camera's verified original backup, correct partition table and exac
 
 ## WBI failure evidence
 
-See [WBI recovery](wbi.md) for exact commands. Preserve both full backups, prewrite/after reads and JSON diagnostics. Never automatically reflash old WBI. A consumed token or timeout requires review, not a retry; only this camera's own verified image may be used through the established fastboot recovery route, followed by complete readback. This release has no hardware-tested WBI restoration.
+See [WBI checks and handling](wbi.md) for exact commands. Preserve both full backups, prewrite/after reads and JSON diagnostics. Never automatically reflash old WBI. A consumed token or timeout requires review, not a retry; only this camera's own verified image may be used through the established fastboot recovery route, followed by complete readback. This release has no hardware-tested WBI restoration.
 
 
 An updated warm image can also restore the unlocked five-item menu. Warm-resume logs alone do not justify repeating WBI invalidation when menu, file and properties are correct.
