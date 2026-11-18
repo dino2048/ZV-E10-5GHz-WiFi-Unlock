@@ -6,6 +6,8 @@ Native frequency-band menus have been verified on the first-generation ZV-E10 wi
 
 ## Windows 2.03
 
+### Maintainer checks
+
 The test host was Windows 10 with libusb-win32 and ordinary PowerShell, using the companion toolkit's persistent Jiritsu session.
 
 | Operation | Result |
@@ -18,9 +20,26 @@ The test host was Windows 10 with libusb-win32 and ordinary PowerShell, using th
 | WBI status | Full-partition read-only status query passed |
 | Normal close | Temporary-loader cleanup and service return confirmed |
 
-Property round trips were `01→00→01`, `02→01→02` and `16→15→16`. The library and properties ended in their pre-test state. First-time factory installation and WBI invalidation writing on Windows await hardware confirmation; the underlying WBI procedure has macOS hardware evidence.
+Property round trips were `01→00→01`, `02→01→02` and `16→15→16`. The library and properties ended in their pre-test state. The community installation report below extends this earlier round-trip evidence.
 
 Windows uses length-delimited service replies rather than Sony-PMCA-RE's extra trailing read; the implementation is toolkit's `linux/host/zve10_senser.py`. Measured raw-backup throughput was about 2.04 MiB/s; see the [toolkit](https://github.com/dino2048/zv-e10-toolkit) for backup configuration and measurements.
+
+### Community complete installation and hotspot connection
+
+[Issue #4](https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/4), reported by @ye-rm, documents one first-generation ZV-E10 2.03 installation on Windows with libusb-win32, ordinary PowerShell and toolkit `8378dcc`. The mainland China B=2/C=22 profile was used (`01/02/16`).
+
+| Operation | Reported result |
+| --- | --- |
+| Full backup | Two user-area/B0/B1 reads; all 16 logical partition slices compared identical |
+| Library and settings | Expected single-byte patch and three properties persisted after restart; `/usr` read-only |
+| Sony tool extraction | Windows `expand.exe` wrapper produced the expected 6200-byte utility and pinned SHA-256 |
+| WBI invalidation | Two matching 60 MiB backups, separate write consent, expected Sony-tool output and exit 0; full readback confirmed only the first 512 bytes zeroed |
+| Restart verification | TypeNB/five items and no `WARMBOOT` line |
+| Hotspot | Owner confirmed a phone connected to the camera's 5 GHz hotspot |
+
+This is a community single-camera report, not an independently reviewed raw session. It establishes a Windows reproduction of the full installation and a user-observed 5 GHz hotspot connection. Phone photo transfer, router connection, remote shooting, instrumented channel/DFS/power behavior and Windows fastboot recovery were not established by this report.
+
+[Issue #3](https://github.com/dino2048/ZV-E10-5GHz-WiFi-Unlock/issues/3#issuecomment-6953698145) separately confirms that workspace initialization fixed the reported startup failure and describes a Windows 2.03 installation through WBI handling and TypeNB/five-item acceptance.
 
 ## Community Linux 2.03 report
 
@@ -35,7 +54,7 @@ This is a community single-camera report; maintainers have not independently rev
 | System identifier | `30110_05.2025031501` | `30110_06.2026060501` |
 | Root session | Original terminal backend | Jiritsu; start with `--backend jiritsu --firmware 2.03 --owner-authorized-exec` |
 | Backup transport | Direct continuous FileControl reads | Root reads to a RAM file, downloaded through Jiritsu |
-| Complete backup evidence | User+B0/B1 double reads; also fastboot double backups | Complete user+B0/B1 single pass, with chunk and full saved-file host checks |
+| Complete backup evidence | User+B0/B1 double reads; also fastboot double backups | Maintainer complete single pass with chunk/saved-file checks; community double-pass reports |
 | Backup rate | About 12 MiB/s via Linux FileControl | About 1.3 MiB/s with 512 KiB staging; 1.989 MiB/s for the complete dedicated-buffer pass |
 | Wi-Fi changes | One file byte and three Backup properties | Same changes |
 | WBI handling | Two full backups, Sony utility, complete after comparison | Same procedure; version-specific system fingerprint |
@@ -58,7 +77,7 @@ Warm resume can retain the old TypeRK/four-item page. On both versions, the [WBI
 
 ## Wireless function records
 
-On 2.02, 5 GHz phone photo transfer and remote capture/photo reception through a 5 GHz router succeeded. The active driver reported hotspot XR/76 and router XR/143, including hotspot channel 157/80 MHz and router channel 40/80 MHz. The 2.03 records cover file/property persistence, WBI handling and the running TypeNB/five-item menu. Results belong to the firmware actually tested.
+On 2.02, 5 GHz phone photo transfer and remote capture/photo reception through a 5 GHz router succeeded. The active driver reported hotspot XR/76 and router XR/143, including hotspot channel 157/80 MHz and router channel 40/80 MHz. The 2.03 records cover file/property persistence, WBI handling and the running TypeNB/five-item menu; issue #4 adds an owner-confirmed phone connection to the 5 GHz hotspot. Results belong to the firmware actually tested.
 
 ## Complete 2.03 backup
 

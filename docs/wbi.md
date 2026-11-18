@@ -8,7 +8,7 @@ Verify the one-byte patch, enabled menu property and selected B/C values, then r
 
 Both versions have validated the same WBI procedure: two complete backups, the Sony utility and full after-read comparison confirming only the first 512 bytes zeroed, followed by a working native band menu after restart. See [firmware differences and validation results](evidence.md).
 
-On Windows system 2.03, read-only WBI status is hardware-validated; extraction via `expand.exe` and WBI invalidation writing remain unvalidated. The existing Sony-tool invalidation followed by menu reconstruction has hardware records on known 2.03 systems with macOS; this is the available recovery procedure, not a Windows end-to-end validation.
+Windows 2.03 has a community reproduction of tool extraction with `expand.exe`, WBI invalidation and restart acceptance. See [the validation record](evidence.md#community-complete-installation-and-hotspot-connection).
 
 WBI handling neither selects nor writes a region and has no region allowlist. Preparation saves the three current properties; execution rechecks that they have not changed. The menu-enable property must be `01`. See [region profiles](regions.md) for choosing B/C.
 
@@ -16,7 +16,7 @@ WBI handling neither selects nor writes a region and has no region allowlist. Pr
 
 The tested 6,200-byte `ud_wbi_drop.elf` came from the **Sony ZV-E10 2.03 official update package**, and was executed on **camera systems 2.02 and 2.03**. Package version and installed system version are different facts. Extraction does not require upgrading the camera. Sony's ELF and complete firmware are proprietary and are not bundled here.
 
-Obtain the official ZV-E10 2.03 updater yourself from Sony support, retain its source URL/package hash privately, and unpack it **offline without running the updater**. Use [fwtool.py](https://github.com/ma1co/fwtool.py), the same extractor recorded in the local research (commit `cdba742b73eed5981480c326aeb30033aabf0223`); follow its requirements in a virtual environment. Install fwtool's Python dependencies; macOS/Linux also need `cabextract`, while Windows uses the system `expand.exe` (this branch has not yet been tested with the official package). The pinned Windows EXE contains an XOR-obfuscated CAB; passing it directly to fwtool is insufficient. Use our offline wrapper:
+Obtain the official ZV-E10 2.03 updater yourself from Sony support, retain its source URL/package hash privately, and unpack it **offline without running the updater**. Use [fwtool.py](https://github.com/ma1co/fwtool.py), the same extractor recorded in the local research (commit `cdba742b73eed5981480c326aeb30033aabf0223`); follow its requirements in a virtual environment. Install fwtool's Python dependencies; macOS/Linux also need `cabextract`, while Windows uses the system `expand.exe` (used in the Windows community report). The pinned Windows EXE contains an XOR-obfuscated CAB; passing it directly to fwtool is insufficient. Use our offline wrapper:
 
 ```sh
 git clone https://github.com/ma1co/fwtool.py.git vendor/fwtool
@@ -65,7 +65,7 @@ $requestFile = 'private/request.json'
 
 `wbi-prepare` performs no camera write. Use your actual displayed version in the request (the example is 2.03). It automatically checks two exact `/version.txt` reads and the matching version-specific ZV-E10 `libObj.so` fingerprint, the patched complete `CautionConfig.so` hash, and all three properties. Model identification uses these known system fingerprints plus the owner's model confirmation; it does not query a separate USB product-name API. The accepted pairs are 2.02 / `30110_05.2025031501` and 2.03 / `30110_06.2026060501`; each has a distinct pinned `libObj.so`. 2.03 requires the Jiritsu backend. Unknown versions stop.
 
-It checks `/proc/partitions`, sysfs major/minor/start/size, the block node identity and absence of a symlink, requiring `nflasha5`, **61,440 KiB / 62,914,560 bytes**, start sector **180224**, length **122880 sectors**. If this kernel does not expose the required sysfs metadata, it stops; do not bypass the checks. These additional identity checks still need hardware validation.
+It checks `/proc/partitions`, sysfs major/minor/start/size, the block node identity and absence of a symlink, requiring `nflasha5`, **61,440 KiB / 62,914,560 bytes**, start sector **180224**, length **122880 sectors**. If this kernel does not expose the required sysfs metadata, it stops; do not bypass the checks.
 
 The selected toolkit backend streams the whole partition twice into exclusive private files, fsyncs them and compares full sizes, host hashes and every byte. `WBI1` is required. A zero first sector returns `already-invalid` and cannot authorize another write; unknown headers stop. Results, originals and partial reads are retained in the session, never overwritten. Preparation returns a `token`, both hashes, an eMMC warning and a `confirmation` string. Review them before proceeding.
 

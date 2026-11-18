@@ -6,7 +6,7 @@
 
 2.03 的所有服务端命令都要带 `--backend jiritsu --firmware 2.03 --owner-authorized-exec`。Jiritsu 会临时上传加载程序和脚本，结束后按本文清理并断电。先读 [AGENTS.md](../AGENTS.md) 和[恢复说明](recovery.zh-CN.md)。
 
-使用 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 最新的 `main`。其 Jiritsu 启动流程会先用相机自带 MOUNT 命令准备维修工作区，再检查旧载荷文件和上传。若初始化返回 `0x10000004`，应停止并保留错误；缺少目录以外的原因也可能导致挂载失败。社区报告者相机上的解决效果仍待确认。
+使用 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit) 最新的 `main`。其 Jiritsu 启动流程会先用相机自带 MOUNT 命令准备维修工作区，再检查旧载荷文件和上传。若初始化返回 `0x10000004`，应停止并保留错误；缺少目录以外的原因也可能导致挂载失败。
 
 ## 1. 准备环境，暂不连接相机
 
@@ -33,7 +33,7 @@ $wifiPython = Join-Path $env:ZVE10_TOOLKIT 'linux\.venv\Scripts\python.exe'
 
 USB 服务模式还需要检查驱动：Sony-PMCA-RE 的 Windows 流程要求分别给海量存储模式与服务模式安装 `libusb-win32` 驱动。用 [Zadig](https://zadig.akeo.ie/) 打开 Options → List All Devices，选中相机的 `054C:0D95` 存储接口安装 **libusb-win32**；相机切换到服务模式后，再给 `054C:0336` 装同一驱动。此后 Windows 不再把相机当作磁盘挂载；工具用完请在设备管理器恢复原驱动。若 Python 找不到已安装的驱动库，用 `LIBUSB0_PATH` 指向对应的 `libusb0.dll`。使用 libusb-win32 时不要设置 `ZVE10_LIBUSB1`；其他后端见 toolkit 说明。已验证的 Windows 会话在普通、非管理员 PowerShell 中运行；如果打开设备报 access denied，再用管理员 PowerShell 启动服务端。
 
-Windows 2.03 的只读会话已验证（见证据记录）。对新电脑、新驱动或新相机，仍应先只读建会话、`inspect`、正常 `close`，核对 `loader_files_removed` 和 `service_returned` 后再考虑安装。
+Windows 2.03 已有[社区完整安装报告](evidence.zh-CN.md#社区完整安装与热点连接报告)。写入前先按下文完成只读检查和备份。
 
 各主机使用 toolkit 最新 `main`，提供通用 Backup 操作、持久会话、Windows 传输支持及维修工作区初始化。macOS/Linux 按下面准备：
 
@@ -169,7 +169,7 @@ $requestFile = 'private/request.json'
 & $wifiPython -B .\tools\wifi.py request --session private\win-install-01 --request-file $requestFile
 ```
 
-下面的 `backup-write` 请求同样处理。该步骤在 Windows 上做过往返验证，但**没有做原厂相机的首次安装验证**。
+下面的 `backup-write` 请求同样处理。Windows 完整安装记录见[验证说明](evidence.zh-CN.md)。
 
 要求返回 `only_difference: 0xd778e4`，补丁后 SHA-256 为：
 

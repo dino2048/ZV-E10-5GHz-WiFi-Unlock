@@ -6,7 +6,7 @@ Follow this guide with an AI Agent, using the companion toolkit for connection, 
 
 Every server command for system 2.03 needs `--backend jiritsu --firmware 2.03 --owner-authorized-exec`. Jiritsu temporarily uploads a loader and script; finish with the documented cleanup and power removal. Read [AGENTS.md](../AGENTS.md) and [recovery](recovery.md) first.
 
-Use the latest `main` of [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit). Its Jiritsu startup prepares the service workspace with the camera's own MOUNT command before checking old loader files or uploading. If initialization fails with `0x10000004`, stop and preserve the error; it can have causes other than a missing directory. Resolution on the community camera reporting this error remains unconfirmed.
+Use the latest `main` of [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit). Its Jiritsu startup prepares the service workspace with the camera's own MOUNT command before checking old loader files or uploading. If initialization fails with `0x10000004`, stop and preserve the error; it can have causes other than a missing directory.
 
 ## 1. Prepare without connecting
 
@@ -33,7 +33,7 @@ When dependency downloads need a proxy, add `-Proxy http://127.0.0.1:7897` (use 
 
 Sony-PMCA-RE's Windows service-mode instructions require a `libusb-win32` driver for both the mass-storage and service-mode device. With [Zadig](https://zadig.akeo.ie/), enable Options → List All Devices, select the camera's `054C:0D95` storage interface, and install **libusb-win32**; once the camera switches to service mode, install the same driver for `054C:0336`. Windows then stops mounting the camera as a drive; restore the original driver in Device Manager when the tools are no longer needed. If Python cannot locate the installed driver library, set `LIBUSB0_PATH` to its `libusb0.dll` path. Leave `ZVE10_LIBUSB1` unset for libusb-win32; see the toolkit guide for other driver backends. The validated Windows session ran in a normal, non-elevated PowerShell; if opening the device reports access denied, run the server from an elevated PowerShell.
 
-A Windows 2.03 read-only session has been validated (see the evidence record). For a new host, driver setup or camera, still start with a read-only session, run `inspect`, close normally and check `loader_files_removed` and `service_returned` before any installation.
+Windows 2.03 has a [community complete-installation report](evidence.md#community-complete-installation-and-hotspot-connection). Start with the read-only inspection and backup steps below before writing.
 
 All hosts use the latest toolkit `main`, which provides shared Backup actions, the persistent session, Windows transport and service-workspace initialization. On macOS/Linux:
 
@@ -169,7 +169,7 @@ $requestFile = 'private/request.json'
 & $wifiPython -B .\tools\wifi.py request --session private\win-install-01 --request-file $requestFile
 ```
 
-The `backup-write` requests below use the same form. The Windows round trip of this phase is validated; a first-time installation on Windows has not been tested.
+The `backup-write` requests below use the same form. The Windows complete-installation record is linked in [validation](evidence.md).
 
 Require `only_difference: 0xd778e4` and patched SHA-256:
 

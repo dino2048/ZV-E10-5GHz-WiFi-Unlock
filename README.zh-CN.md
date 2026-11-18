@@ -51,10 +51,10 @@ cd ZV-E10-5GHz-WiFi-Unlock
 
 建议提示词：
 
-> 请先读 AGENTS.md 和 docs/install.zh-CN.md，帮我核对兼容性、备份相机，再协助安装。写入前请让我确认实际使用国家或地区及修改范围，保存本机原始值，并核对恢复方法。Windows 上请按 PowerShell 准备步骤操作，并在写入前说明已验证范围。
+> 请先读 AGENTS.md 和 docs/install.zh-CN.md，帮我核对兼容性、备份相机，再协助安装。写入前请让我确认实际使用国家或地区及修改范围，保存本机原始值，并核对恢复方法。Windows 上请按 PowerShell 准备步骤操作。
 
 安装工具复用 [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit)，由 AI Agent 按[安装说明](docs/install.zh-CN.md)协助准备环境并操作。
-Windows 2.03 用户按[PowerShell 准备步骤](docs/install.zh-CN.md#windows-主机准备powershell)安装环境，再由 Agent 协助完成备份、检查、解锁与验收。平台适用范围见[验证说明](docs/evidence.zh-CN.md)。
+Windows 2.03 已有社区完整安装及手机连接 5 GHz 热点的成功报告。按[PowerShell 准备步骤](docs/install.zh-CN.md#windows-主机准备powershell)完成备份、安装与验收，记录见[验证说明](docs/evidence.zh-CN.md)。
 
 [安装步骤](docs/install.zh-CN.md) · [Agent 指引](AGENTS.md) · [验收和恢复](docs/recovery.zh-CN.md)
 

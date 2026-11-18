@@ -51,10 +51,10 @@ cd ZV-E10-5GHz-WiFi-Unlock
 
 Suggested prompt:
 
-> Read AGENTS.md and docs/install.md. Help me check compatibility and back up my camera before installing. Ask me to confirm my actual country of use and the exact changes before writing. Preserve my original values and verify recovery steps. On Windows, follow the PowerShell preparation section and state the validated scope before writing.
+> Read AGENTS.md and docs/install.md. Help me check compatibility and back up my camera before installing. Ask me to confirm my actual country of use and the exact changes before writing. Preserve my original values and verify recovery steps. On Windows, follow the PowerShell preparation section.
 
 Installation reuses [zv-e10-toolkit](https://github.com/dino2048/zv-e10-toolkit). Have the agent follow the [installation guide](docs/install.md) to prepare the environment and perform the procedure.
-On Windows system 2.03, follow the [PowerShell setup](docs/install.md#windows-host-preparation-powershell), then use an Agent to guide backup, inspection, unlocking and verification. See [validation](docs/evidence.md) for platform coverage.
+Windows 2.03 has a community complete-installation and 5 GHz hotspot phone-connection report. Follow the [PowerShell setup](docs/install.md#windows-host-preparation-powershell) for backup, installation and verification; see [validation](docs/evidence.md) for the record.
 
 [Installation](docs/install.md) · [Agent instructions](AGENTS.md) · [Verification and recovery](docs/recovery.md)
 

@@ -8,7 +8,7 @@
 
 ## 暖启动镜像与菜单构建
 
-Sony 在 60 MiB 的 `nflasha5` 分区保存 Warm Boot Image。本机 2.02 的补丁跳表与 Backup 值都正确时，暖恢复仍沿用旧的 TypeRK 四项 Page1，频带节点 `0x285` 未创建；取电池约 30 秒也未保证重新构建。备份并用 Sony 原厂工具使 WBI 入口失效后，下次启动没有暖恢复标志，全局和屏幕当前 Page1 均为 TypeNB 五项，`0x285` 已启用。机主确认原生菜单及 5 GHz 功能。安全验收见[WBI 检查与处理](wbi.zh-CN.md)。这是 2.02 实机结果，2.03 的菜单恢复已另有记录，完整无线功能仍待验收。
+Sony 在 60 MiB 的 `nflasha5` 分区保存 Warm Boot Image。本机 2.02 的补丁跳表与 Backup 值都正确时，暖恢复仍沿用旧的 TypeRK 四项 Page1，频带节点 `0x285` 未创建；取电池约 30 秒也未保证重新构建。备份并用 Sony 原厂工具使 WBI 入口失效后，下次启动没有暖恢复标志，全局和屏幕当前 Page1 均为 TypeNB 五项，`0x285` 已启用。机主确认原生菜单及 5 GHz 功能。安全验收见[WBI 检查与处理](wbi.zh-CN.md)。这是 2.02 实机结果；2.03 另有菜单恢复记录和社区手机连接热点报告。
 
 固件 dmesg 中的 `WARMBOOT` 行才是暖启动标志；内核的 `PM: Low-level resume complete` 和 `Waking up from system sleep` 在冷启动时也会出现，不能单独作为证据。`boot-check` 现在只根据 `WARMBOOT` 行判断 `warm_resume`（2026-11-16）。
 

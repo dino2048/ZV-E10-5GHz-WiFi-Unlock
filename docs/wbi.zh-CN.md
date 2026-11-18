@@ -8,7 +8,7 @@
 
 两个版本均已验证相同的 WBI 流程：完整双备份、Sony 工具执行、完整写后回读，确认只有首 512 字节清零，重启后原生频段菜单可用。版本差异与功能结果统一见[验证说明](evidence.zh-CN.md)。
 
-Windows 2.03 已实测只读 WBI 查询；`expand.exe` 提取分支及 WBI 失效写入仍未验证。现有 Sony 工具失效旧镜像、重启后重新初始化菜单的流程，已有 macOS 主机与已知 2.03 相机的实机记录；这说明有可用处理办法，不代表 Windows 已完成该步骤的端到端验收。
+Windows 2.03 已有社区复现，覆盖 `expand.exe` 工具提取、WBI 失效写入及重启验收，见[验证记录](evidence.zh-CN.md#社区完整安装与热点连接报告)。
 
 WBI 处理不选择或修改地区配置，也不按地区白名单限制。准备阶段读取并保存当前三个属性，执行前再次核对它们没有变化；菜单启用属性仍须为 `01`。B/C 的选择见[地区配置](regions.zh-CN.md)。
 
@@ -16,7 +16,7 @@ WBI 处理不选择或修改地区配置，也不按地区白名单限制。准�
 
 实测 6,200 字节的 `ud_wbi_drop.elf` 来自 **Sony ZV-E10 2.03 官方更新包**，已在相机系统 **2.02 和 2.03** 执行。工具来源版本与相机系统版本是两回事，提取工具不需要升级相机。Sony ELF 和完整固件是专有文件，本仓库不分发。
 
-用户自行从 Sony 支持网站取得 ZV-E10 2.03 官方更新包，私密记录下载地址及包哈希，**不要运行升级器**。使用研究记录中的 [fwtool.py](https://github.com/ma1co/fwtool.py)，固定提交 `cdba742b73eed5981480c326aeb30033aabf0223`，按其要求在虚拟环境准备依赖。macOS/Linux 另需安装 `cabextract`；Windows 使用系统自带的 `expand.exe`，此分支尚未用官方包实测。该 Windows EXE 内含异或编码的 CAB，不能直接交给 fwtool 解包；使用以下离线封装：
+用户自行从 Sony 支持网站取得 ZV-E10 2.03 官方更新包，私密记录下载地址及包哈希，**不要运行升级器**。使用研究记录中的 [fwtool.py](https://github.com/ma1co/fwtool.py)，固定提交 `cdba742b73eed5981480c326aeb30033aabf0223`，按其要求在虚拟环境准备依赖。macOS/Linux 另需安装 `cabextract`；Windows 使用系统自带的 `expand.exe`，社区 Windows 报告已使用该分支成功提取。该 Windows EXE 内含异或编码的 CAB，不能直接交给 fwtool 解包；使用以下离线封装：
 
 ```sh
 git clone https://github.com/ma1co/fwtool.py.git vendor/fwtool
@@ -65,7 +65,7 @@ $requestFile = 'private/request.json'
 
 `wbi-prepare` 不写相机。请求中必须填写实际屏幕版本（示例为 2.03）。它自动两读 `/version.txt`，并检查对应系统的 ZV-E10 `libObj.so` 指纹、完整补丁版 `CautionConfig.so` 哈希及三个属性。机型识别采用已知系统文件指纹与机主屏幕确认，不另行查询 USB 产品名称。接受 2.02 / `30110_05.2025031501` 与 2.03 / `30110_06.2026060501`，分别固定不同的 `libObj.so` 指纹。2.03 必须使用 Jiritsu 后端，未知系统停止。
 
-工具核对 `/proc/partitions`、sysfs 主次设备号/起点/长度、块设备节点身份及非符号链接，严格要求 `nflasha5`、**61,440 KiB / 62,914,560 字节**、起始扇区 **180224**、长度 **122880 扇区**。若内核没有所需 sysfs 信息，停止，不要绕过保护；这些新增识别检查仍待实机验证。
+工具核对 `/proc/partitions`、sysfs 主次设备号/起点/长度、块设备节点身份及非符号链接，严格要求 `nflasha5`、**61,440 KiB / 62,914,560 字节**、起始扇区 **180224**、长度 **122880 扇区**。若内核没有所需 sysfs 信息，停止，不要绕过保护。
 
 通过所选 toolkit 后端将完整分区流式读取两次，主机独占创建私密文件并 fsync，核对完整长度、主机哈希和逐字节相等。首部必须是 `WBI1`。若首 512 字节已经全零，返回 `already-invalid`，禁止重复写入；未知首部立即停止。结果、原始文件及失败时的部分读数保留在会话目录，不覆盖旧证据。返回的 `token`、双哈希、eMMC 风险提示和 `confirmation` 字符串必须先审阅。
 

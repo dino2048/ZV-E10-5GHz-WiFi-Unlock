@@ -13,7 +13,7 @@
 
 ## 验证范围
 
-菜单解锁、属性及文件修改、WBI 处理、无线功能的系统与平台范围见[验证说明](evidence.zh-CN.md)。Windows 2.03 覆盖环境安装、服务连接、备份、检查和属性/库字节修改；WBI 写入尚待 Windows 实机确认。
+菜单解锁、属性及文件修改、WBI 处理、无线功能的系统与平台范围见[验证说明](evidence.zh-CN.md)。Windows 2.03 已有社区完整安装报告，包含工具提取、WBI 写入、重启验收及手机连接 5 GHz 热点。
 
 配套使用 [zv-e10-toolkit 最新 `main`](https://github.com/dino2048/zv-e10-toolkit/tree/main)，包含 Windows 支持及 Jiritsu 工作区初始化。连接前更新并重跑离线检查，相机会话期间保持代码不变。[offline-checks.json](offline-checks.json) 记录验证时实际使用的 toolkit 提交，仅供追溯，不限制安装版本，也不表示未来更新已经通过验证。
 
